@@ -35,7 +35,7 @@ const schedules = {
 const schedule = schedules['CS-2018-2019'];
 
 const App = () => (
-  <main>
+  <main className="course-page">
     <h1>{schedule.title}</h1>
     <ul>
       {Object.entries(schedule.courses).map(([code, course]) => (
