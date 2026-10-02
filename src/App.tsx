@@ -1,6 +1,6 @@
 import './App.css';
 
-const schedules = {
+const courseShelfByYear = {
   'CS-2018-2019': {
     title: 'CS Courses for 2018-2019',
     courses: {
@@ -32,15 +32,15 @@ const schedules = {
   },
 };
 
-const schedule = schedules['CS-2018-2019'];
+const chosenCourseShelf = courseShelfByYear['CS-2018-2019'];
 
 const App = () => (
   <main className="course-page">
-    <h1>{schedule.title}</h1>
+   <h1>{chosenCourseShelf.title}</h1>
     <ul>
-      {Object.entries(schedule.courses).map(([code, course]) => (
-        <li key={code}>
-          {course.term} CS {course.number}: {course.title}
+      {Object.entries(chosenCourseShelf.courses).slice().map(([courseTag, courseInfo]) => (
+        <li key={courseTag}>
+         {courseInfo.term} CS {courseInfo.number}: {courseInfo.title}
         </li>
       ))}
     </ul>
