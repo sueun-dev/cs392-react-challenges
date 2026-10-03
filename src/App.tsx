@@ -37,10 +37,12 @@ const chosenCourseShelf = courseShelfByYear['CS-2018-2019'];
 const App = () => (
   <main className="course-page">
    <h1>{chosenCourseShelf.title}</h1>
-    <ul>
+    <ul className="flex flex-wrap gap-3">
       {Object.entries(chosenCourseShelf.courses).slice().map(([courseTag, courseInfo]) => (
-        <li key={courseTag}>
-         {courseInfo.term} CS {courseInfo.number}: {courseInfo.title}
+        <li key={courseTag} className="flex w-56 grow flex-col border border-gray-300 p-4">
+         <h2 className="mb-2 text-xl">{courseInfo.term} CS {courseInfo.number}</h2>
+          <p className="grow">{courseInfo.title}</p>
+          <p className="mt-4 border-t border-gray-300 pt-3">{courseInfo.meets}</p>
         </li>
       ))}
     </ul>
