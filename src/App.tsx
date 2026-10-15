@@ -15,15 +15,22 @@ type Schedule = {
 
 type Term = 'Fall' | 'Winter' | 'Spring';
 
-const TermSelector = ({ onSelect }: {
+const TermSelector = ({ selectedTerm, onSelect }: {
+  selectedTerm: Term;
   onSelect: (term: Term) => void;
 }) => (
-  <div>
+  <div className="mb-6 flex gap-2" role="group" aria-label="Academic term">
     {(['Fall', 'Winter', 'Spring'] as const).map(term => (
       <button
         key={term}
         type="button"
+        aria-pressed={selectedTerm === term}
         onClick={() => onSelect(term)}
+        className={`min-h-11 cursor-pointer rounded border px-4 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800 ${
+          selectedTerm === term
+            ? 'border-gray-800 bg-gray-800 text-white'
+            : 'border-gray-300 bg-white text-gray-800 hover:bg-gray-100'
+        }`}
       >
         {term}
       </button>
@@ -54,7 +61,7 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
   return (
     <main className="course-page">
       <h1>{schedule.title}</h1>
-      <TermSelector onSelect={setSelectedTerm} />
+      <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
       <CourseList courses={schedule.courses} selectedTerm={selectedTerm} />
     </main>
   );
