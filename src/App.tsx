@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 type Course = {
@@ -19,7 +19,7 @@ const TermSelector = ({ selectedTerm, onSelect }: {
   selectedTerm: Term;
   onSelect: (term: Term) => void;
 }) => (
-  <div className="mb-6 flex gap-2" role="group" aria-label="Academic term">
+  <div className="flex gap-2" role="group" aria-label="Academic term">
     {(['Fall', 'Winter', 'Spring'] as const).map(term => (
       <button
         key={term}
@@ -81,6 +81,7 @@ const CourseList = ({ courses, selectedTerm, selectedCourses, onSelect }: {
 const TermPage = ({ schedule }: { schedule: Schedule }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const coursePlan = useRef<HTMLDialogElement>(null);
 
   const toggleCourse = (courseId: string) => {
     setSelectedCourses(current => current.includes(courseId)
@@ -91,9 +92,44 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
   return (
     <main className="course-page">
       <h1>{schedule.title}</h1>
-      <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
+        <button type="button" onClick={() => coursePlan.current?.showModal()}
+          className="border px-4 py-2">
+          Course plan
+        </button>
+      </div>
       <CourseList courses={schedule.courses} selectedTerm={selectedTerm}
         selectedCourses={selectedCourses} onSelect={toggleCourse} />
+      <dialog ref={coursePlan} aria-labelledby="course-plan-title"
+        className="m-auto max-h-[80vh] w-11/12 max-w-lg overflow-y-auto border p-0"
+        onClick={event => {
+          if (event.target === event.currentTarget) event.currentTarget.close();
+        }}>
+        <div className="p-6">
+          <h2 id="course-plan-title" className="text-xl font-semibold">Course plan</h2>
+          {selectedCourses.length === 0 ? (
+            <p className="my-4">No courses selected. Click a course card to select it.</p>
+          ) : (
+            <ul className="my-4 space-y-4">
+              {selectedCourses.map(courseId => {
+                const course = schedule.courses[courseId];
+                return (
+                  <li key={courseId}>
+                    <h3 className="font-semibold">{course.term} CS {course.number}</h3>
+                    <p>{course.title}</p>
+                    <p>{course.meets}</p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <button type="button" onClick={() => coursePlan.current?.close()}
+            className="border px-4 py-2">
+            Close
+          </button>
+        </div>
+      </dialog>
     </main>
   );
 };
