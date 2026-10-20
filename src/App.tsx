@@ -38,18 +38,29 @@ const TermSelector = ({ selectedTerm, onSelect }: {
   </div>
 );
 
-const CourseList = ({ courses, selectedTerm }: {
+const CourseList = ({ courses, selectedTerm, selectedCourses, onSelect }: {
   courses: Record<string, Course>;
   selectedTerm: Term;
+  selectedCourses: string[];
+  onSelect: (courseId: string) => void;
 }) => (
   <ul className="flex flex-wrap gap-3">
     {Object.entries(courses)
       .filter(([, course]) => course.term === selectedTerm)
       .map(([courseTag, courseInfo]) => (
-        <li key={courseTag} className="flex w-56 grow flex-col border border-gray-300 p-4">
+        <li key={courseTag} className="flex w-56 grow">
+          <button
+            type="button"
+            aria-pressed={selectedCourses.includes(courseTag)}
+            onClick={() => onSelect(courseTag)}
+            className={`flex w-full cursor-pointer flex-col border p-4 text-left ${
+              selectedCourses.includes(courseTag) ? 'border-gray-800 bg-gray-100' : 'border-gray-300'
+            }`}
+          >
           <h2 className="mb-2 text-xl">{courseInfo.term} CS {courseInfo.number}</h2>
           <p className="grow">{courseInfo.title}</p>
           <p className="mt-4 border-t border-gray-300 pt-3">{courseInfo.meets}</p>
+          </button>
         </li>
       ))}
   </ul>
@@ -57,12 +68,20 @@ const CourseList = ({ courses, selectedTerm }: {
 
 const TermPage = ({ schedule }: { schedule: Schedule }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+
+  const toggleCourse = (courseId: string) => {
+    setSelectedCourses(current => current.includes(courseId)
+      ? current.filter(id => id !== courseId)
+      : [...current, courseId]);
+  };
 
   return (
     <main className="course-page">
       <h1>{schedule.title}</h1>
       <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
-      <CourseList courses={schedule.courses} selectedTerm={selectedTerm} />
+      <CourseList courses={schedule.courses} selectedTerm={selectedTerm}
+        selectedCourses={selectedCourses} onSelect={toggleCourse} />
     </main>
   );
 };
