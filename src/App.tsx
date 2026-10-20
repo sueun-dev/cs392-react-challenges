@@ -47,22 +47,34 @@ const CourseList = ({ courses, selectedTerm, selectedCourses, onSelect }: {
   <ul className="flex flex-wrap gap-3">
     {Object.entries(courses)
       .filter(([, course]) => course.term === selectedTerm)
-      .map(([courseTag, courseInfo]) => (
+      .map(([courseTag, courseInfo]) => {
+        const isSelected = selectedCourses.includes(courseTag);
+
+        return (
         <li key={courseTag} className="flex w-56 grow">
           <button
             type="button"
-            aria-pressed={selectedCourses.includes(courseTag)}
+            aria-pressed={isSelected}
             onClick={() => onSelect(courseTag)}
-            className={`flex w-full cursor-pointer flex-col border p-4 text-left ${
-              selectedCourses.includes(courseTag) ? 'border-gray-800 bg-gray-100' : 'border-gray-300'
+            className={`flex w-full cursor-pointer flex-col rounded-xl border p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700 ${
+              isSelected ? 'border-purple-700 bg-purple-50 text-purple-950' : 'border-gray-300 hover:border-gray-500'
             }`}
           >
-          <h2 className="mb-2 text-xl">{courseInfo.term} CS {courseInfo.number}</h2>
-          <p className="grow">{courseInfo.title}</p>
-          <p className="mt-4 border-t border-gray-300 pt-3">{courseInfo.meets}</p>
+            <h2 className="mb-2 flex w-full justify-between gap-2 text-xl">
+              <span>{courseInfo.term} CS {courseInfo.number}</span>
+              {isSelected && (
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" className="mt-1 size-5 shrink-0">
+                  <path d="m5 12 4 4 10-10" />
+                </svg>
+              )}
+            </h2>
+            <p className="grow">{courseInfo.title}</p>
+            <p className="mt-4 border-t border-gray-300 pt-3">{courseInfo.meets}</p>
           </button>
         </li>
-      ))}
+        );
+      })}
   </ul>
 );
 
