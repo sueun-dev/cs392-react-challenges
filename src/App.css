@@ -1,23 +1,169 @@
 
-@theme {
-  --animate-logo-spin: logo-spin infinite 20s linear;
-
-  @keyframes logo-spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-}
-
 .course-page {
   margin: 3rem auto;
   padding: 0 1.25rem;
 }
 
-.course-page h1 {
-  margin: 0 0 1.5rem;
+.page-heading {
+  margin-bottom: 2rem;
+}
+
+.page-heading h1,
+.course-plan h2 {
+  font-family: Georgia, serif;
+  font-weight: 600;
   line-height: 1.2;
+}
+
+.page-heading h1 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.course-toolbar {
+  margin-bottom: 1.5rem;
+}
+
+.term-selector {
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  background: #ebe7f0;
+}
+
+.term-button,
+.action-button {
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.term-button {
+  color: var(--muted);
+}
+
+.term-button:hover,
+.term-button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.action-button {
+  background: var(--accent);
+  color: white;
+}
+
+.action-button:hover {
+  background: #3c2068;
+}
+
+.course-card {
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  line-height: 1.5;
+}
+
+.course-card:hover {
+  border-color: var(--accent);
+}
+
+.course-card[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: #f0e8f8;
+  color: #351856;
+}
+
+.course-card h2 {
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.course-card > p {
+  font-size: 0.9rem;
+}
+
+.course-meeting {
+  width: 100%;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.course-plan {
+  width: calc(100% - 2rem);
+  max-width: 34rem;
+  max-height: 80vh;
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1.5rem 4rem rgb(30 18 45 / 20%);
+}
+
+.course-plan::backdrop {
+  background: rgb(30 18 45 / 38%);
+}
+
+.plan-content {
+  padding: 1.5rem;
+}
+
+.course-plan h2 {
+  margin-bottom: 1.25rem;
+  font-size: 1.75rem;
+}
+
+.plan-list > li {
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.plan-list h3 {
+  margin-bottom: 0.25rem;
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.plan-meeting,
+.plan-empty {
+  color: var(--muted);
+}
+
+.plan-meeting {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-empty {
+  padding: 0.5rem 0 1.5rem;
+}
+
+.plan-footer {
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 30rem) {
+  .course-page {
+    margin: 1.75rem auto;
+    padding: 0 1rem;
+  }
+
+  .term-button,
+  .action-button {
+    padding-inline: 0.8rem;
+  }
+
+  .course-toolbar > .action-button {
+    margin-left: auto;
+  }
 }
