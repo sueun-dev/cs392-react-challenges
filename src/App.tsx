@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { hasTimeClash } from './timeConflicts.js';
 import './App.css';
 
 type Course = {
@@ -34,17 +35,19 @@ const TermSelector = ({ selectedTerm, onSelect }: {
   </div>
 );
 
-const CourseCard = ({ courseId, course, isSelected, onSelect }: {
+const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect }: {
   courseId: string;
   course: Course;
   isSelected: boolean;
+  hasClash: boolean;
   onSelect: (courseId: string) => void;
 }) => (
   <button
     type="button"
     aria-pressed={isSelected}
+    disabled={hasClash}
     onClick={() => onSelect(courseId)}
-    className="course-card flex w-full flex-col text-left"
+    className="course-card flex w-full flex-col text-left disabled:opacity-40"
   >
     <h2 className="mb-3 flex w-full justify-between gap-2">
       <span>{course.term} CS {course.number}</span>
@@ -60,16 +63,18 @@ const CourseCard = ({ courseId, course, isSelected, onSelect }: {
   </button>
 );
 
-const CourseList = ({ courses, selectedCourses, onSelect }: {
+const CourseList = ({ courses, selectedCourses, clashingCourseIds, onSelect }: {
   courses: [string, Course][];
   selectedCourses: string[];
+  clashingCourseIds: string[];
   onSelect: (courseId: string) => void;
 }) => (
   <ul className="flex flex-wrap gap-4">
     {courses.map(([courseId, course]) => (
       <li key={courseId} className="flex min-w-0 w-56 grow">
         <CourseCard courseId={courseId} course={course}
-          isSelected={selectedCourses.includes(courseId)} onSelect={onSelect} />
+          isSelected={selectedCourses.includes(courseId)}
+          hasClash={clashingCourseIds.includes(courseId)} onSelect={onSelect} />
       </li>
     ))}
   </ul>
@@ -122,11 +127,21 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
     .filter(([, course]) => course.term === selectedTerm);
   const plannedCourses: [string, Course][] = selectedCourses
     .map(courseId => [courseId, schedule.courses[courseId]]);
+  const clashingCourseIds = visibleCourses
+    .filter(([courseId, course]) => {
+      if (selectedCourses.includes(courseId)) return false;
+      return plannedCourses.some(([, pickedCourse]) => hasTimeClash(course, pickedCourse));
+    })
+    .map(([courseId]) => courseId);
 
   const toggleCourse = (courseId: string) => {
-    setSelectedCourses(current => current.includes(courseId)
-      ? current.filter(id => id !== courseId)
-      : [...current, courseId]);
+    setSelectedCourses(current => {
+      if (current.includes(courseId)) return current.filter(id => id !== courseId);
+      if (current.some(id => hasTimeClash(schedule.courses[courseId], schedule.courses[id]))) {
+        return current;
+      }
+      return [...current, courseId];
+    });
   };
 
   return (
@@ -138,7 +153,8 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
         <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
         <CoursePlan courses={plannedCourses} />
       </div>
-      <CourseList courses={visibleCourses} selectedCourses={selectedCourses} onSelect={toggleCourse} />
+      <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
+        clashingCourseIds={clashingCourseIds} onSelect={toggleCourse} />
     </main>
   );
 };
