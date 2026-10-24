@@ -47,7 +47,7 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect }: {
     aria-pressed={isSelected}
     disabled={hasClash}
     onClick={() => onSelect(courseId)}
-    className="course-card flex w-full flex-col text-left disabled:opacity-40"
+    className="course-card flex w-full flex-col text-left"
   >
     <h2 className="mb-3 flex w-full justify-between gap-2">
       <span>{course.term} CS {course.number}</span>
@@ -59,7 +59,10 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect }: {
       )}
     </h2>
     <p className="grow">{course.title}</p>
-    <p className="course-meeting mt-5 pt-3">{course.meets}</p>
+    <div className="course-meeting mt-5 pt-3">
+      <p>{course.meets}</p>
+      {hasClash && <p className="course-conflict">Time conflict</p>}
+    </div>
   </button>
 );
 
@@ -87,7 +90,7 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
     <>
       <button type="button" className="action-button"
         onClick={() => dialog.current?.showModal()}>
-        Course plan
+        Course plan ({courses.length})
       </button>
       <dialog ref={dialog} aria-labelledby="course-plan-title" className="course-plan"
         onClick={event => {
@@ -153,6 +156,9 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
         <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
         <CoursePlan courses={plannedCourses} />
       </div>
+      <p className="course-hint">
+        Select a card to add it, or click it again to remove it. Conflicting courses are marked below.
+      </p>
       <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
         clashingCourseIds={clashingCourseIds} onSelect={toggleCourse} />
     </main>

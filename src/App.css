@@ -22,7 +22,13 @@
 }
 
 .course-toolbar {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.course-hint {
+  margin-bottom: 1.25rem;
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 
 .term-selector {
@@ -67,8 +73,22 @@
   line-height: 1.5;
 }
 
-.course-card:hover {
+.course-card:not(:disabled):hover {
   border-color: var(--accent);
+}
+
+.course-card:disabled {
+  border-style: dashed;
+  background: #f1eef3;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.course-conflict {
+  margin-top: 0.5rem;
+  color: #8a3418;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .course-card[aria-pressed="true"] {
