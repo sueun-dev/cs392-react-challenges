@@ -35,19 +35,22 @@ const TermSelector = ({ selectedTerm, onSelect }: {
   </div>
 );
 
-const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect }: {
+const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect, onEdit }: {
   courseId: string;
   course: Course;
   isSelected: boolean;
   hasClash: boolean;
   onSelect: (courseId: string) => void;
+  onEdit: (course: Course) => void;
 }) => (
+  <div className="course-card flex w-full grow flex-col text-left"
+    data-selected={isSelected} data-conflict={hasClash}>
   <button
     type="button"
     aria-pressed={isSelected}
     disabled={hasClash}
     onClick={() => onSelect(courseId)}
-    className="course-card flex w-full flex-col text-left"
+    className="flex w-full grow flex-col text-left disabled:cursor-not-allowed"
   >
     <h2 className="mb-3 flex w-full justify-between gap-2">
       <span>{course.term} CS {course.number}</span>
@@ -64,23 +67,47 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect }: {
       {hasClash && <p className="course-conflict">Time conflict</p>}
     </div>
   </button>
+  <button type="button" className="mt-2 self-start text-sm underline" onClick={() => onEdit(course)}>
+    Edit {course.term} CS {course.number}
+  </button>
+  </div>
 );
 
-const CourseList = ({ courses, selectedCourses, clashingCourseIds, onSelect }: {
+const CourseList = ({ courses, selectedCourses, clashingCourseIds, onSelect, onEdit }: {
   courses: [string, Course][];
   selectedCourses: string[];
   clashingCourseIds: string[];
   onSelect: (courseId: string) => void;
+  onEdit: (course: Course) => void;
 }) => (
   <ul className="flex flex-wrap gap-4">
     {courses.map(([courseId, course]) => (
-      <li key={courseId} className="flex min-w-0 w-56 grow">
+      <li key={courseId} className="flex min-w-0 w-56 grow flex-col">
         <CourseCard courseId={courseId} course={course}
           isSelected={selectedCourses.includes(courseId)}
-          hasClash={clashingCourseIds.includes(courseId)} onSelect={onSelect} />
+          hasClash={clashingCourseIds.includes(courseId)} onSelect={onSelect} onEdit={onEdit} />
       </li>
     ))}
   </ul>
+);
+
+const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void }) => (
+  <main className="course-page">
+    <header className="page-heading">
+      <h1>Edit {course.term} CS {course.number}</h1>
+    </header>
+    <form className="flex flex-col gap-4" onSubmit={event => event.preventDefault()}>
+      <label className="flex flex-col gap-1">
+        Title
+        <input name="title" type="text" defaultValue={course.title} className="rounded border p-2" />
+      </label>
+      <label className="flex flex-col gap-1">
+        Meeting times
+        <input name="meets" type="text" defaultValue={course.meets} className="rounded border p-2" />
+      </label>
+      <button type="button" className="action-button self-start" onClick={onCancel}>Cancel</button>
+    </form>
+  </main>
 );
 
 const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
@@ -126,6 +153,7 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
 const TermPage = ({ schedule }: { schedule: Schedule }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const visibleCourses = Object.entries(schedule.courses)
     .filter(([, course]) => course.term === selectedTerm);
   const plannedCourses: [string, Course][] = selectedCourses
@@ -147,6 +175,10 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
     });
   };
 
+  if (editingCourse) {
+    return <CourseForm course={editingCourse} onCancel={() => setEditingCourse(null)} />;
+  }
+
   return (
     <main className="course-page">
       <header className="page-heading">
@@ -160,7 +192,7 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
         Select a card to add it, or click it again to remove it. Conflicting courses are marked below.
       </p>
       <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
-        clashingCourseIds={clashingCourseIds} onSelect={toggleCourse} />
+        clashingCourseIds={clashingCourseIds} onSelect={toggleCourse} onEdit={setEditingCourse} />
     </main>
   );
 };

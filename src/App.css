@@ -73,15 +73,14 @@
   line-height: 1.5;
 }
 
-.course-card:not(:disabled):hover {
+.course-card[data-conflict="false"]:hover {
   border-color: var(--accent);
 }
 
-.course-card:disabled {
+.course-card[data-conflict="true"] {
   border-style: dashed;
   background: #f1eef3;
   color: var(--muted);
-  cursor: not-allowed;
 }
 
 .course-conflict {
@@ -91,7 +90,7 @@
   font-weight: 600;
 }
 
-.course-card[aria-pressed="true"] {
+.course-card[data-selected="true"] {
   border-color: var(--accent);
   background: #f0e8f8;
   color: #351856;
@@ -102,7 +101,7 @@
   font-weight: 650;
 }
 
-.course-card > p {
+.course-card > button > p {
   font-size: 0.9rem;
 }
 
