@@ -4,6 +4,56 @@
   padding: 0 1.25rem;
 }
 
+.course-editor {
+  max-width: 44rem;
+}
+
+.course-editor-note {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.course-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.course-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.course-field > span {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.course-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 3rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+  caret-color: var(--accent);
+}
+
+.course-field input:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.course-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
 .page-heading {
   margin-bottom: 2rem;
 }

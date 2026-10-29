@@ -92,20 +92,24 @@ const CourseList = ({ courses, selectedCourses, clashingCourseIds, onSelect, onE
 );
 
 const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void }) => (
-  <main className="course-page">
+  <main className="course-page course-editor">
     <header className="page-heading">
-      <h1>Edit {course.term} CS {course.number}</h1>
+      <h1 id="course-editor-title">Edit {course.term} CS {course.number}</h1>
+      <p className="course-editor-note" id="course-editor-note">Review the course details. Changes are not saved.</p>
     </header>
-    <form className="flex flex-col gap-4" onSubmit={event => event.preventDefault()}>
-      <label className="flex flex-col gap-1">
-        Title
-        <input name="title" type="text" defaultValue={course.title} className="rounded border p-2" />
+    <form className="course-form" aria-labelledby="course-editor-title"
+      aria-describedby="course-editor-note" onSubmit={event => event.preventDefault()}>
+      <label className="course-field">
+        <span>Title</span>
+        <input name="title" type="text" defaultValue={course.title} autoFocus />
       </label>
-      <label className="flex flex-col gap-1">
-        Meeting times
-        <input name="meets" type="text" defaultValue={course.meets} className="rounded border p-2" />
+      <label className="course-field">
+        <span>Meeting times</span>
+        <input name="meets" type="text" defaultValue={course.meets} />
       </label>
-      <button type="button" className="action-button self-start" onClick={onCancel}>Cancel</button>
+      <div className="course-form-actions">
+        <button type="button" className="action-button" onClick={onCancel}>Cancel</button>
+      </div>
     </form>
   </main>
 );
