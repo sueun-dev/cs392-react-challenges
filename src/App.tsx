@@ -96,8 +96,7 @@ const meetingError = (value: string) => {
   const meetPieces = value.match(/^((?:M|Tu|W|Th|F|Sa|Su)+) ([01]?\d|2[0-3]):([0-5]\d)-([01]?\d|2[0-3]):([0-5]\d)$/);
   if (!meetPieces) return 'Use days and start-end, e.g., MWF 12:00-13:20.';
   const dayBits: string[] = meetPieces[1].match(/Tu|Th|Sa|Su|M|W|F/g) ?? [];
-  const singleDays = dayBits.filter((day, index) => dayBits.indexOf(day) === index);
-  if (singleDays.length !== dayBits.length) return 'List each day only once.';
+  if (new Set(dayBits).size !== dayBits.length) return 'List each day only once.';
   const beginMinute = Number(meetPieces[2]) * 60 + Number(meetPieces[3]);
   const finishMinute = Number(meetPieces[4]) * 60 + Number(meetPieces[5]);
   return beginMinute < finishMinute ? '' : 'End time must be after start time.';
@@ -118,15 +117,16 @@ const validateCourse = (course: Course) => ({
   meets: courseSchema.meets(course.meets),
 });
 
+const courseFields = [
+  { name: 'title', label: 'Title', hint: 'At least 2 characters.' },
+  { name: 'term', label: 'Term', hint: 'Fall, Winter, Spring, or Summer.' },
+  { name: 'number', label: 'Course number', hint: 'A number with an optional section, e.g., 213-2.' },
+  { name: 'meets', label: 'Meeting times', hint: 'For example, MWF 12:00-13:20. Leave blank if unscheduled.' },
+] as const;
+
 const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void }) => {
   const [values, setValues] = useState(course);
   const errors = validateCourse(values);
-  const fields = [
-    ['title', 'Title'],
-    ['term', 'Term'],
-    ['number', 'Course number'],
-    ['meets', 'Meeting times'],
-  ] as const;
 
   return (
   <main className="course-page course-editor">
@@ -136,15 +136,22 @@ const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void
     </header>
     <form className="course-form" aria-labelledby="course-editor-title"
       aria-describedby="course-editor-note" onSubmit={event => event.preventDefault()}>
-      {fields.map(([name, label]) => (
-        <label key={name} className="course-field">
-          <span>{label}</span>
-          <input name={name} type="text" value={values[name]} autoFocus={name === 'title'}
+      {courseFields.map(({ name, label, hint }) => (
+        <div key={name} className="course-field" data-field={name}>
+          <label htmlFor={`course-${name}`}>{label}</label>
+          <input id={`course-${name}`} name={name} type="text"
+            value={values[name]} autoFocus={name === 'title'}
             aria-invalid={Boolean(errors[name])}
-            aria-describedby={errors[name] ? `${name}-error` : undefined}
-            onChange={event => setValues({ ...values, [name]: event.target.value })} />
-          {errors[name] && <p id={`${name}-error`} className="field-error">{errors[name]}</p>}
-        </label>
+            aria-describedby={`${name}-message`}
+            onChange={event => {
+              const value = event.target.value;
+              setValues(current => ({ ...current, [name]: value }));
+            }} />
+          <p id={`${name}-message`} className={errors[name] ? 'field-error' : 'field-hint'}
+            aria-live="polite">
+            {errors[name] || hint}
+          </p>
+        </div>
       ))}
       <div className="course-form-actions">
         <button type="button" className="action-button" onClick={onCancel}>Cancel</button>

@@ -16,15 +16,28 @@
 
 .course-form {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
 }
 
 .course-field {
   display: grid;
+  align-content: start;
   gap: 0.5rem;
+  min-width: 0;
 }
 
-.course-field > span {
+.course-field[data-field="title"],
+.course-field[data-field="meets"],
+.course-form-actions {
+  grid-column: 1 / -1;
+}
+
+.course-field > label {
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -47,9 +60,23 @@
   outline-offset: 2px;
 }
 
+.course-field input[aria-invalid="true"] {
+  border-color: #8a3418;
+  background: #fff6f1;
+}
+
+.field-error,
+.field-hint {
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .field-error {
   color: #8a3418;
-  font-size: 0.85rem;
+}
+
+.field-hint {
+  color: var(--muted);
 }
 
 .course-form-actions {
@@ -227,6 +254,12 @@
 }
 
 @media (max-width: 30rem) {
+  .course-form {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
+    gap: 1.25rem;
+  }
+
   .course-page {
     margin: 1.75rem auto;
     padding: 0 1rem;
