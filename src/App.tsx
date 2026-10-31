@@ -91,7 +91,44 @@ const CourseList = ({ courses, selectedCourses, clashingCourseIds, onSelect, onE
   </ul>
 );
 
-const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void }) => (
+const meetingError = (value: string) => {
+  if (value === '') return '';
+  const meetPieces = value.match(/^((?:M|Tu|W|Th|F|Sa|Su)+) ([01]?\d|2[0-3]):([0-5]\d)-([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (!meetPieces) return 'Use days and start-end, e.g., MWF 12:00-13:20.';
+  const dayBits: string[] = meetPieces[1].match(/Tu|Th|Sa|Su|M|W|F/g) ?? [];
+  const singleDays = dayBits.filter((day, index) => dayBits.indexOf(day) === index);
+  if (singleDays.length !== dayBits.length) return 'List each day only once.';
+  const beginMinute = Number(meetPieces[2]) * 60 + Number(meetPieces[3]);
+  const finishMinute = Number(meetPieces[4]) * 60 + Number(meetPieces[5]);
+  return beginMinute < finishMinute ? '' : 'End time must be after start time.';
+};
+
+const courseSchema: Record<keyof Course, (value: string) => string> = {
+  title: value => value.trim().length >= 2 ? '' : 'Title must have at least 2 characters.',
+  term: value => ['Fall', 'Winter', 'Spring', 'Summer'].includes(value)
+    ? '' : 'Use Fall, Winter, Spring, or Summer.',
+  number: value => /^\d+(?:-\d+)?$/.test(value) ? '' : 'Use a number, e.g., 213 or 213-2.',
+  meets: meetingError,
+};
+
+const validateCourse = (course: Course) => ({
+  title: courseSchema.title(course.title),
+  term: courseSchema.term(course.term),
+  number: courseSchema.number(course.number),
+  meets: courseSchema.meets(course.meets),
+});
+
+const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void }) => {
+  const [values, setValues] = useState(course);
+  const errors = validateCourse(values);
+  const fields = [
+    ['title', 'Title'],
+    ['term', 'Term'],
+    ['number', 'Course number'],
+    ['meets', 'Meeting times'],
+  ] as const;
+
+  return (
   <main className="course-page course-editor">
     <header className="page-heading">
       <h1 id="course-editor-title">Edit {course.term} CS {course.number}</h1>
@@ -99,20 +136,23 @@ const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void
     </header>
     <form className="course-form" aria-labelledby="course-editor-title"
       aria-describedby="course-editor-note" onSubmit={event => event.preventDefault()}>
-      <label className="course-field">
-        <span>Title</span>
-        <input name="title" type="text" defaultValue={course.title} autoFocus />
-      </label>
-      <label className="course-field">
-        <span>Meeting times</span>
-        <input name="meets" type="text" defaultValue={course.meets} />
-      </label>
+      {fields.map(([name, label]) => (
+        <label key={name} className="course-field">
+          <span>{label}</span>
+          <input name={name} type="text" value={values[name]} autoFocus={name === 'title'}
+            aria-invalid={Boolean(errors[name])}
+            aria-describedby={errors[name] ? `${name}-error` : undefined}
+            onChange={event => setValues({ ...values, [name]: event.target.value })} />
+          {errors[name] && <p id={`${name}-error`} className="field-error">{errors[name]}</p>}
+        </label>
+      ))}
       <div className="course-form-actions">
         <button type="button" className="action-button" onClick={onCancel}>Cancel</button>
       </div>
     </form>
   </main>
-);
+  );
+};
 
 const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
   const dialog = useRef<HTMLDialogElement>(null);

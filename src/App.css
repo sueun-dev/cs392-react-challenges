@@ -47,6 +47,11 @@
   outline-offset: 2px;
 }
 
+.field-error {
+  color: #8a3418;
+  font-size: 0.85rem;
+}
+
 .course-form-actions {
   display: flex;
   justify-content: flex-end;
