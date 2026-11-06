@@ -12,23 +12,25 @@ const firebaseConfig = {
   appId: '1:523620722107:web:8d9d236d5062a65096509e',
 };
 
-const firebase = initializeApp(firebaseConfig);
-const database = getDatabase(firebase);
+const database = getDatabase(initializeApp(firebaseConfig));
 
-export const useDataQuery = (path: string): [unknown, boolean, Error | undefined] => {
+type DataQuery = [data: unknown, isLoading: boolean, error: Error | undefined];
+
+export const useDataQuery = (path: string): DataQuery => {
   const [data, setData] = useState<unknown>();
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error>();
 
-  useEffect(() => {
-    return onValue(ref(database, path), snapshot => {
+  useEffect(() => onValue(ref(database, path),
+    snapshot => {
       setData(snapshot.val());
-      setLoading(false);
-    }, queryError => {
+      setIsLoading(false);
+    },
+    queryError => {
       setError(queryError);
-      setLoading(false);
-    });
-  }, [path]);
+      setIsLoading(false);
+    }
+  ), [path]);
 
-  return [data, loading, error];
+  return [data, isLoading, error];
 };

@@ -250,16 +250,20 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
 };
 
 const isSchedule = (data: unknown): data is Schedule =>
-  typeof data === 'object' && data !== null && 'title' in data && 'courses' in data;
+  typeof data === 'object' && data !== null
+  && 'title' in data && typeof data.title === 'string'
+  && 'courses' in data && typeof data.courses === 'object' && data.courses !== null;
+
+const PageMessage = ({ role, children }: { role: 'status' | 'alert'; children: string }) => (
+  <main className="course-page"><p role={role}>{children}</p></main>
+);
 
 const App = () => {
   const [schedule, isLoading, queryError] = useDataQuery('/');
 
-  if (queryError || (!isLoading && !isSchedule(schedule))) {
-    return <main className="course-page"><p role="alert">Could not load courses.</p></main>;
-  }
-  if (isLoading || !isSchedule(schedule)) {
-    return <main className="course-page"><p role="status">Loading courses...</p></main>;
+  if (isLoading) return <PageMessage role="status">Loading courses...</PageMessage>;
+  if (queryError || !isSchedule(schedule)) {
+    return <PageMessage role="alert">Could not load courses.</PageMessage>;
   }
 
   return <TermPage schedule={schedule} />;
