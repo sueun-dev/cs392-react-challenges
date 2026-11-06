@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { hasTimeClash } from './timeConflicts.js';
+import { useDataQuery } from './utilities/firebase';
 import './App.css';
 
 type Course = {
@@ -248,30 +249,18 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
   );
 };
 
+const isSchedule = (data: unknown): data is Schedule =>
+  typeof data === 'object' && data !== null && 'title' in data && 'courses' in data;
+
 const App = () => {
-  const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [error, setError] = useState('');
+  const [schedule, isLoading, queryError] = useDataQuery('/');
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetch('https://courses.cs.northwestern.edu/394/guides/data/cs-courses-firestore.php', {
-      signal: controller.signal,
-    })
-      .then(response => {
-        if (!response.ok) throw new Error('Could not load courses.');
-        return response.json();
-      })
-      .then(data => setSchedule(data.schedules['CS-2018-2019']))
-      .catch(() => {
-        if (!controller.signal.aborted) setError('Could not load courses.');
-      });
-
-    return () => controller.abort();
-  }, []);
-
-  if (error) return <main className="course-page"><p role="alert">{error}</p></main>;
-  if (!schedule) return <main className="course-page"><p role="status">Loading courses...</p></main>;
+  if (queryError || (!isLoading && !isSchedule(schedule))) {
+    return <main className="course-page"><p role="alert">Could not load courses.</p></main>;
+  }
+  if (isLoading || !isSchedule(schedule)) {
+    return <main className="course-page"><p role="status">Loading courses...</p></main>;
+  }
 
   return <TermPage schedule={schedule} />;
 };
