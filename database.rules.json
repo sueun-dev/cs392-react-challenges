@@ -3,7 +3,7 @@
     ".read": true,
     "courses": {
       "$courseId": {
-        ".write": true,
+        ".write": "newData.exists()",
         ".validate": "newData.hasChildren(['term', 'number', 'meets', 'title'])",
         "term": { ".validate": "newData.isString()" },
         "number": { ".validate": "newData.isString()" },

@@ -81,7 +81,9 @@
 
 .course-form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 0.75rem;
   border-top: 1px solid var(--border);
   padding-top: 1.25rem;
 }
@@ -143,8 +145,25 @@
   color: white;
 }
 
-.action-button:hover {
+.action-button:hover:enabled {
   background: #3c2068;
+}
+
+.action-button[data-variant="secondary"] {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.action-button[data-variant="secondary"]:hover:enabled {
+  border-color: var(--accent);
+  background: #f0e8f8;
+}
+
+.action-button:disabled {
+  background: #d9d3e0;
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 .course-card {

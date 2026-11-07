@@ -46,31 +46,32 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect, onEdit }
 }) => (
   <div className="course-card flex w-full grow flex-col text-left"
     data-selected={isSelected} data-conflict={hasClash}>
-  <button
-    type="button"
-    aria-pressed={isSelected}
-    disabled={hasClash}
-    onClick={() => onSelect(courseId)}
-    className="flex w-full grow flex-col text-left disabled:cursor-not-allowed"
-  >
-    <h2 className="mb-3 flex w-full justify-between gap-2">
-      <span>{course.term} CS {course.number}</span>
-      {isSelected && (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" className="size-5 shrink-0">
-          <path d="m5 12 4 4 10-10" />
-        </svg>
-      )}
-    </h2>
-    <p className="grow">{course.title}</p>
-    <div className="course-meeting mt-5 pt-3">
-      <p>{course.meets}</p>
-      {hasClash && <p className="course-conflict">Time conflict</p>}
-    </div>
-  </button>
-  <button type="button" className="mt-2 self-start text-sm underline" onClick={() => onEdit(courseId)}>
-    Edit {course.term} CS {course.number}
-  </button>
+    <button
+      type="button"
+      aria-pressed={isSelected}
+      disabled={hasClash}
+      onClick={() => onSelect(courseId)}
+      className="flex w-full grow flex-col text-left disabled:cursor-not-allowed"
+    >
+      <h2 className="mb-3 flex w-full justify-between gap-2">
+        <span>{course.term} CS {course.number}</span>
+        {isSelected && (
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" className="size-5 shrink-0">
+            <path d="m5 12 4 4 10-10" />
+          </svg>
+        )}
+      </h2>
+      <p className="grow">{course.title}</p>
+      <div className="course-meeting mt-5 pt-3">
+        <p>{course.meets}</p>
+        {hasClash && <p className="course-conflict">Time conflict</p>}
+      </div>
+    </button>
+    <button type="button" className="mt-2 self-start text-sm underline"
+      onClick={() => onEdit(courseId)}>
+      Edit {course.term} CS {course.number}
+    </button>
   </div>
 );
 
@@ -125,6 +126,28 @@ const courseFields = [
   { name: 'meets', label: 'Meeting times', hint: 'For example, MWF 12:00-13:20. Leave blank if unscheduled.' },
 ] as const;
 
+const CourseField = ({ name, label, hint, value, error, onChange }: {
+  name: keyof Course;
+  label: string;
+  hint: string;
+  value: string;
+  error: string;
+  onChange: (name: keyof Course, value: string) => void;
+}) => (
+  <div className="course-field" data-field={name}>
+    <label htmlFor={`course-${name}`}>{label}</label>
+    <input id={`course-${name}`} name={name} type="text"
+      value={value} autoFocus={name === 'title'}
+      aria-invalid={Boolean(error)}
+      aria-describedby={`${name}-message`}
+      onChange={event => onChange(name, event.target.value)} />
+    <p id={`${name}-message`} className={error ? 'field-error' : 'field-hint'}
+      aria-live="polite">
+      {error || hint}
+    </p>
+  </div>
+);
+
 const CourseForm = ({ courseId, course, onCancel }: {
   courseId: string;
   course: Course;
@@ -132,48 +155,42 @@ const CourseForm = ({ courseId, course, onCancel }: {
 }) => {
   const [values, setValues] = useState(course);
   const errors = validateCourse(values);
-  const hasErrors = Object.values(errors).some(Boolean);
-  const hasChanges = courseFields.some(({ name }) => values[name] !== course[name]);
+  const canSubmit = !Object.values(errors).some(Boolean)
+    && courseFields.some(({ name }) => values[name] !== course[name]);
+
+  const changeValue = (name: keyof Course, value: string) =>
+    setValues(current => ({ ...current, [name]: value }));
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (hasErrors || !hasChanges) return;
-    updateData(`/courses/${courseId}`, values);
+    if (canSubmit) updateData(`/courses/${courseId}`, values);
   };
 
   return (
-  <main className="course-page course-editor">
-    <header className="page-heading">
-      <h1 id="course-editor-title">Edit {course.term} CS {course.number}</h1>
-      <p className="course-editor-note" id="course-editor-note">Review the course details, then submit to save your changes.</p>
-    </header>
-    <form className="course-form" aria-labelledby="course-editor-title"
-      aria-describedby="course-editor-note" onSubmit={submit}>
-      {courseFields.map(({ name, label, hint }) => (
-        <div key={name} className="course-field" data-field={name}>
-          <label htmlFor={`course-${name}`}>{label}</label>
-          <input id={`course-${name}`} name={name} type="text"
-            value={values[name]} autoFocus={name === 'title'}
-            aria-invalid={Boolean(errors[name])}
-            aria-describedby={`${name}-message`}
-            onChange={event => {
-              const value = event.target.value;
-              setValues(current => ({ ...current, [name]: value }));
-            }} />
-          <p id={`${name}-message`} className={errors[name] ? 'field-error' : 'field-hint'}
-            aria-live="polite">
-            {errors[name] || hint}
-          </p>
+    <main className="course-page course-editor">
+      <header className="page-heading">
+        <h1 id="course-editor-title">Edit {course.term} CS {course.number}</h1>
+        <p className="course-editor-note" id="course-editor-note">
+          Review the course details, then submit to save your changes.
+        </p>
+      </header>
+      <form className="course-form" aria-labelledby="course-editor-title"
+        aria-describedby="course-editor-note" onSubmit={submit}>
+        {courseFields.map(field => (
+          <CourseField key={field.name} {...field} value={values[field.name]}
+            error={errors[field.name]} onChange={changeValue} />
+        ))}
+        <div className="course-form-actions">
+          <button type="button" className="action-button" data-variant="secondary"
+            onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="action-button" disabled={!canSubmit}>
+            Submit
+          </button>
         </div>
-      ))}
-      <div className="course-form-actions">
-        <button type="button" className="action-button" onClick={onCancel}>Cancel</button>
-        <button type="submit" className="action-button" disabled={hasErrors || !hasChanges}>
-          Submit
-        </button>
-      </div>
-    </form>
-  </main>
+      </form>
+    </main>
   );
 };
 
