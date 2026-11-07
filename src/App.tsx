@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { hasTimeClash } from './timeConflicts.js';
-import { useDataQuery } from './utilities/firebase';
+import { updateData, useDataQuery } from './utilities/firebase';
 import './App.css';
 
 type Course = {
@@ -42,7 +42,7 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect, onEdit }
   isSelected: boolean;
   hasClash: boolean;
   onSelect: (courseId: string) => void;
-  onEdit: (course: Course) => void;
+  onEdit: (courseId: string) => void;
 }) => (
   <div className="course-card flex w-full grow flex-col text-left"
     data-selected={isSelected} data-conflict={hasClash}>
@@ -68,7 +68,7 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect, onEdit }
       {hasClash && <p className="course-conflict">Time conflict</p>}
     </div>
   </button>
-  <button type="button" className="mt-2 self-start text-sm underline" onClick={() => onEdit(course)}>
+  <button type="button" className="mt-2 self-start text-sm underline" onClick={() => onEdit(courseId)}>
     Edit {course.term} CS {course.number}
   </button>
   </div>
@@ -79,7 +79,7 @@ const CourseList = ({ courses, selectedCourses, clashingCourseIds, onSelect, onE
   selectedCourses: string[];
   clashingCourseIds: string[];
   onSelect: (courseId: string) => void;
-  onEdit: (course: Course) => void;
+  onEdit: (courseId: string) => void;
 }) => (
   <ul className="flex flex-wrap gap-4">
     {courses.map(([courseId, course]) => (
@@ -125,18 +125,30 @@ const courseFields = [
   { name: 'meets', label: 'Meeting times', hint: 'For example, MWF 12:00-13:20. Leave blank if unscheduled.' },
 ] as const;
 
-const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void }) => {
+const CourseForm = ({ courseId, course, onCancel }: {
+  courseId: string;
+  course: Course;
+  onCancel: () => void;
+}) => {
   const [values, setValues] = useState(course);
   const errors = validateCourse(values);
+  const hasErrors = Object.values(errors).some(Boolean);
+  const hasChanges = courseFields.some(({ name }) => values[name] !== course[name]);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (hasErrors || !hasChanges) return;
+    updateData(`/courses/${courseId}`, values);
+  };
 
   return (
   <main className="course-page course-editor">
     <header className="page-heading">
       <h1 id="course-editor-title">Edit {course.term} CS {course.number}</h1>
-      <p className="course-editor-note" id="course-editor-note">Review the course details. Changes are not saved.</p>
+      <p className="course-editor-note" id="course-editor-note">Review the course details, then submit to save your changes.</p>
     </header>
     <form className="course-form" aria-labelledby="course-editor-title"
-      aria-describedby="course-editor-note" onSubmit={event => event.preventDefault()}>
+      aria-describedby="course-editor-note" onSubmit={submit}>
       {courseFields.map(({ name, label, hint }) => (
         <div key={name} className="course-field" data-field={name}>
           <label htmlFor={`course-${name}`}>{label}</label>
@@ -156,6 +168,9 @@ const CourseForm = ({ course, onCancel }: { course: Course; onCancel: () => void
       ))}
       <div className="course-form-actions">
         <button type="button" className="action-button" onClick={onCancel}>Cancel</button>
+        <button type="submit" className="action-button" disabled={hasErrors || !hasChanges}>
+          Submit
+        </button>
       </div>
     </form>
   </main>
@@ -205,7 +220,7 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
 const TermPage = ({ schedule }: { schedule: Schedule }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const visibleCourses = Object.entries(schedule.courses)
     .filter(([, course]) => course.term === selectedTerm);
   const plannedCourses: [string, Course][] = selectedCourses
@@ -227,8 +242,9 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
     });
   };
 
-  if (editingCourse) {
-    return <CourseForm course={editingCourse} onCancel={() => setEditingCourse(null)} />;
+  if (editingCourseId !== null) {
+    return <CourseForm courseId={editingCourseId} course={schedule.courses[editingCourseId]}
+      onCancel={() => setEditingCourseId(null)} />;
   }
 
   return (
@@ -244,7 +260,7 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
         Select a card to add it, or click it again to remove it. Conflicting courses are marked below.
       </p>
       <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
-        clashingCourseIds={clashingCourseIds} onSelect={toggleCourse} onEdit={setEditingCourse} />
+        clashingCourseIds={clashingCourseIds} onSelect={toggleCourse} onEdit={setEditingCourseId} />
     </main>
   );
 };

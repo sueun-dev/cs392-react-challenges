@@ -1,6 +1,16 @@
 {
   "rules": {
     ".read": true,
-    ".write": false
+    "courses": {
+      "$courseId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['term', 'number', 'meets', 'title'])",
+        "term": { ".validate": "newData.isString()" },
+        "number": { ".validate": "newData.isString()" },
+        "meets": { ".validate": "newData.isString()" },
+        "title": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    }
   }
 }

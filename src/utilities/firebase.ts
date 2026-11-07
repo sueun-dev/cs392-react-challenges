@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getDatabase, onValue, ref } from 'firebase/database';
+import { getDatabase, onValue, ref, update } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAwgyGuQuQ3QKlLMc0p6C2-63_wo56KE1o',
@@ -34,3 +34,5 @@ export const useDataQuery = (path: string): DataQuery => {
 
   return [data, isLoading, error];
 };
+
+export const updateData = (path: string, value: object) => update(ref(database, path), value);
