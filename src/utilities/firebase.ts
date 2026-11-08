@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { getDatabase, onValue, ref, update } from 'firebase/database';
 
 const firebaseConfig = {
@@ -12,7 +13,21 @@ const firebaseConfig = {
   appId: '1:523620722107:web:8d9d236d5062a65096509e',
 };
 
-const database = getDatabase(initializeApp(firebaseConfig));
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const auth = getAuth(app);
+
+export const signInWithGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
+
+export const signOutUser = () => signOut(auth);
+
+export const useAuthState = () => {
+  const [user, setUser] = useState<User | null | undefined>();
+
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
+
+  return user;
+};
 
 type DataQuery = [data: unknown, isLoading: boolean, error: Error | undefined];
 

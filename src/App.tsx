@@ -1,6 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { hasTimeClash } from './timeConflicts.js';
-import { updateData, useDataQuery } from './utilities/firebase';
+import {
+  signInWithGoogle, signOutUser, updateData, useAuthState, useDataQuery,
+} from './utilities/firebase';
 import './App.css';
 
 type Course = {
@@ -42,7 +44,7 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect, onEdit }
   isSelected: boolean;
   hasClash: boolean;
   onSelect: (courseId: string) => void;
-  onEdit: (courseId: string) => void;
+  onEdit?: (courseId: string) => void;
 }) => (
   <div className="course-card flex w-full grow flex-col text-left"
     data-selected={isSelected} data-conflict={hasClash}>
@@ -68,10 +70,12 @@ const CourseCard = ({ courseId, course, isSelected, hasClash, onSelect, onEdit }
         {hasClash && <p className="course-conflict">Time conflict</p>}
       </div>
     </button>
-    <button type="button" className="mt-2 self-start text-sm underline"
-      onClick={() => onEdit(courseId)}>
-      Edit {course.term} CS {course.number}
-    </button>
+    {onEdit && (
+      <button type="button" className="mt-2 self-start text-sm underline"
+        onClick={() => onEdit(courseId)}>
+        Edit {course.term} CS {course.number}
+      </button>
+    )}
   </div>
 );
 
@@ -80,7 +84,7 @@ const CourseList = ({ courses, selectedCourses, clashingCourseIds, onSelect, onE
   selectedCourses: string[];
   clashingCourseIds: string[];
   onSelect: (courseId: string) => void;
-  onEdit: (courseId: string) => void;
+  onEdit?: (courseId: string) => void;
 }) => (
   <ul className="flex flex-wrap gap-4">
     {courses.map(([courseId, course]) => (
@@ -234,7 +238,14 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
   );
 };
 
-const TermPage = ({ schedule }: { schedule: Schedule }) => {
+const AuthButton = ({ isSignedIn }: { isSignedIn: boolean }) => (
+  <button type="button" className="action-button" data-variant="secondary"
+    onClick={isSignedIn ? signOutUser : signInWithGoogle}>
+    {isSignedIn ? 'Sign out' : 'Sign in with Google'}
+  </button>
+);
+
+const TermPage = ({ schedule, isSignedIn }: { schedule: Schedule; isSignedIn: boolean }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
@@ -259,7 +270,7 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
     });
   };
 
-  if (editingCourseId !== null) {
+  if (isSignedIn && editingCourseId !== null) {
     return <CourseForm courseId={editingCourseId} course={schedule.courses[editingCourseId]}
       onCancel={() => setEditingCourseId(null)} />;
   }
@@ -271,13 +282,17 @@ const TermPage = ({ schedule }: { schedule: Schedule }) => {
       </header>
       <div className="course-toolbar flex flex-wrap items-center justify-between gap-3">
         <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
-        <CoursePlan courses={plannedCourses} />
+        <div className="flex flex-wrap gap-3">
+          <AuthButton isSignedIn={isSignedIn} />
+          <CoursePlan courses={plannedCourses} />
+        </div>
       </div>
       <p className="course-hint">
         Select a card to add it, or click it again to remove it. Conflicting courses are marked below.
       </p>
       <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
-        clashingCourseIds={clashingCourseIds} onSelect={toggleCourse} onEdit={setEditingCourseId} />
+        clashingCourseIds={clashingCourseIds} onSelect={toggleCourse}
+        onEdit={isSignedIn ? setEditingCourseId : undefined} />
     </main>
   );
 };
@@ -293,13 +308,14 @@ const PageMessage = ({ role, children }: { role: 'status' | 'alert'; children: s
 
 const App = () => {
   const [schedule, isLoading, queryError] = useDataQuery('/');
+  const user = useAuthState();
 
-  if (isLoading) return <PageMessage role="status">Loading courses...</PageMessage>;
+  if (isLoading || user === undefined) return <PageMessage role="status">Loading courses...</PageMessage>;
   if (queryError || !isSchedule(schedule)) {
     return <PageMessage role="alert">Could not load courses.</PageMessage>;
   }
 
-  return <TermPage schedule={schedule} />;
+  return <TermPage schedule={schedule} isSignedIn={user !== null} />;
 };
 
 export default App;
