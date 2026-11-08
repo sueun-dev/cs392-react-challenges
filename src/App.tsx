@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
+import type { User } from 'firebase/auth';
 import { hasTimeClash } from './timeConflicts.js';
 import {
   signInWithGoogle, signOutUser, updateData, useAuthState, useDataQuery,
@@ -130,6 +131,15 @@ const courseFields = [
   { name: 'meets', label: 'Meeting times', hint: 'For example, MWF 12:00-13:20. Leave blank if unscheduled.' },
 ] as const;
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+const saveMessages: Record<SaveStatus, string> = {
+  idle: '',
+  saving: 'Saving...',
+  saved: 'Saved.',
+  error: 'Could not save. Make sure you are signed in, then try again.',
+};
+
 const CourseField = ({ name, label, hint, value, error, onChange }: {
   name: keyof Course;
   label: string;
@@ -158,16 +168,27 @@ const CourseForm = ({ courseId, course, onCancel }: {
   onCancel: () => void;
 }) => {
   const [values, setValues] = useState(course);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const errors = validateCourse(values);
-  const canSubmit = !Object.values(errors).some(Boolean)
+  const canSubmit = saveStatus !== 'saving'
+    && !Object.values(errors).some(Boolean)
     && courseFields.some(({ name }) => values[name] !== course[name]);
 
-  const changeValue = (name: keyof Course, value: string) =>
+  const changeValue = (name: keyof Course, value: string) => {
     setValues(current => ({ ...current, [name]: value }));
+    setSaveStatus('idle');
+  };
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (canSubmit) updateData(`/courses/${courseId}`, values);
+    if (!canSubmit) return;
+    setSaveStatus('saving');
+    try {
+      await updateData(`/courses/${courseId}`, values);
+      setSaveStatus('saved');
+    } catch {
+      setSaveStatus('error');
+    }
   };
 
   return (
@@ -185,6 +206,9 @@ const CourseForm = ({ courseId, course, onCancel }: {
             error={errors[field.name]} onChange={changeValue} />
         ))}
         <div className="course-form-actions">
+          <p className="save-status" role="status" data-status={saveStatus}>
+            {saveMessages[saveStatus]}
+          </p>
           <button type="button" className="action-button" data-variant="secondary"
             onClick={onCancel}>
             Cancel
@@ -238,14 +262,27 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
   );
 };
 
-const AuthButton = ({ isSignedIn }: { isSignedIn: boolean }) => (
-  <button type="button" className="action-button" data-variant="secondary"
-    onClick={isSignedIn ? signOutUser : signInWithGoogle}>
-    {isSignedIn ? 'Sign out' : 'Sign in with Google'}
-  </button>
-);
+const AuthControls = ({ user }: { user: User | null }) => {
+  const [error, setError] = useState('');
 
-const TermPage = ({ schedule, isSignedIn }: { schedule: Schedule; isSignedIn: boolean }) => {
+  const run = (action: () => Promise<void>) => {
+    setError('');
+    action().catch(() => setError('Could not complete sign in. Please try again.'));
+  };
+
+  return (
+    <div className="auth-controls">
+      {user && <span className="auth-user">{user.displayName ?? user.email}</span>}
+      <button type="button" className="action-button" data-variant="secondary"
+        onClick={() => run(user ? signOutUser : signInWithGoogle)}>
+        {user ? 'Sign out' : 'Sign in with Google'}
+      </button>
+      {error && <p role="alert" className="field-error auth-error">{error}</p>}
+    </div>
+  );
+};
+
+const TermPage = ({ schedule, user }: { schedule: Schedule; user: User | null }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
@@ -270,7 +307,7 @@ const TermPage = ({ schedule, isSignedIn }: { schedule: Schedule; isSignedIn: bo
     });
   };
 
-  if (isSignedIn && editingCourseId !== null) {
+  if (user && editingCourseId !== null) {
     return <CourseForm courseId={editingCourseId} course={schedule.courses[editingCourseId]}
       onCancel={() => setEditingCourseId(null)} />;
   }
@@ -282,8 +319,8 @@ const TermPage = ({ schedule, isSignedIn }: { schedule: Schedule; isSignedIn: bo
       </header>
       <div className="course-toolbar flex flex-wrap items-center justify-between gap-3">
         <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
-        <div className="flex flex-wrap gap-3">
-          <AuthButton isSignedIn={isSignedIn} />
+        <div className="flex flex-wrap items-center gap-3">
+          <AuthControls user={user} />
           <CoursePlan courses={plannedCourses} />
         </div>
       </div>
@@ -292,7 +329,7 @@ const TermPage = ({ schedule, isSignedIn }: { schedule: Schedule; isSignedIn: bo
       </p>
       <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
         clashingCourseIds={clashingCourseIds} onSelect={toggleCourse}
-        onEdit={isSignedIn ? setEditingCourseId : undefined} />
+        onEdit={user ? setEditingCourseId : undefined} />
     </main>
   );
 };
@@ -315,7 +352,7 @@ const App = () => {
     return <PageMessage role="alert">Could not load courses.</PageMessage>;
   }
 
-  return <TermPage schedule={schedule} isSignedIn={user !== null} />;
+  return <TermPage schedule={schedule} user={user} />;
 };
 
 export default App;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { initializeApp } from 'firebase/app';
+import { FirebaseError, initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { getDatabase, onValue, ref, update } from 'firebase/database';
 
@@ -17,7 +17,16 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
-export const signInWithGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
+const dismissedSignInCodes = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
+
+export const signInWithGoogle = async () => {
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  } catch (error) {
+    if (error instanceof FirebaseError && dismissedSignInCodes.includes(error.code)) return;
+    throw error;
+  }
+};
 
 export const signOutUser = () => signOut(auth);
 
