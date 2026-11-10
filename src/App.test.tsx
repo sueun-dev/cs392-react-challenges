@@ -6,6 +6,7 @@ import App from './App';
 
 const firebase = vi.hoisted(() => ({
   user: null as User | null | undefined,
+  isAdmin: false,
   signInWithGoogle: vi.fn(),
   signOutUser: vi.fn(),
   updateData: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock('./utilities/firebase', () => ({
   signOutUser: firebase.signOutUser,
   updateData: firebase.updateData,
   useAuthState: () => firebase.user,
+  useIsAdmin: () => [firebase.isAdmin, false],
   useDataQuery: () => [{
     title: 'CS Courses',
     courses: {
@@ -30,6 +32,7 @@ describe('authentication', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     firebase.user = null;
+    firebase.isAdmin = false;
     firebase.signInWithGoogle.mockResolvedValue(undefined);
     firebase.signOutUser.mockResolvedValue(undefined);
     firebase.updateData.mockResolvedValue(undefined);
@@ -60,8 +63,17 @@ describe('authentication', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not complete sign in');
   });
 
-  it('shows the user name, Sign out, and Edit buttons when signed in', () => {
+  it('shows the user name, Sign out, and no Edit buttons to a signed-in user who is not an admin', () => {
     firebase.user = signedInUser;
+    render(<App />);
+    expect(screen.getByText('Sueun Cho')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the user name, Sign out, and Edit buttons to an admin', () => {
+    firebase.user = signedInUser;
+    firebase.isAdmin = true;
     render(<App />);
     expect(screen.getByText('Sueun Cho')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
@@ -77,6 +89,7 @@ describe('authentication', () => {
 
   it('saves an edited course and reports it', async () => {
     firebase.user = signedInUser;
+    firebase.isAdmin = true;
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Edit Fall CS 101' }));
     const submit = screen.getByRole('button', { name: 'Submit' });
@@ -92,6 +105,7 @@ describe('authentication', () => {
 
   it('reports a failed save and clears the message after the next edit', async () => {
     firebase.user = signedInUser;
+    firebase.isAdmin = true;
     firebase.updateData.mockRejectedValue(new Error('Permission denied'));
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Edit Fall CS 101' }));

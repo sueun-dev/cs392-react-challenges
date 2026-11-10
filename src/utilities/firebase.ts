@@ -59,4 +59,9 @@ export const useDataQuery = (path: string): DataQuery => {
   return [data, isLoading, error];
 };
 
+export const useIsAdmin = (user: User | null | undefined): [isAdmin: boolean, isLoading: boolean] => {
+  const [adminFlag, isLoading] = useDataQuery(`/admins/${user?.uid ?? 'guest'}`);
+  return [Boolean(user) && adminFlag === true, isLoading];
+};
+
 export const updateData = (path: string, value: object) => update(ref(database, path), value);

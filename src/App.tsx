@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import type { User } from 'firebase/auth';
 import { hasTimeClash } from './timeConflicts.js';
 import {
-  signInWithGoogle, signOutUser, updateData, useAuthState, useDataQuery,
+  signInWithGoogle, signOutUser, updateData, useAuthState, useDataQuery, useIsAdmin,
 } from './utilities/firebase';
 import './App.css';
 
@@ -282,7 +282,7 @@ const AuthControls = ({ user }: { user: User | null }) => {
   );
 };
 
-const TermPage = ({ schedule, user }: { schedule: Schedule; user: User | null }) => {
+const TermPage = ({ schedule, user, isAdmin }: { schedule: Schedule; user: User | null; isAdmin: boolean }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
@@ -307,7 +307,7 @@ const TermPage = ({ schedule, user }: { schedule: Schedule; user: User | null })
     });
   };
 
-  if (user && editingCourseId !== null) {
+  if (isAdmin && editingCourseId !== null) {
     return <CourseForm courseId={editingCourseId} course={schedule.courses[editingCourseId]}
       onCancel={() => setEditingCourseId(null)} />;
   }
@@ -329,7 +329,7 @@ const TermPage = ({ schedule, user }: { schedule: Schedule; user: User | null })
       </p>
       <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
         clashingCourseIds={clashingCourseIds} onSelect={toggleCourse}
-        onEdit={user ? setEditingCourseId : undefined} />
+        onEdit={isAdmin ? setEditingCourseId : undefined} />
     </main>
   );
 };
@@ -346,13 +346,14 @@ const PageMessage = ({ role, children }: { role: 'status' | 'alert'; children: s
 const App = () => {
   const [schedule, isLoading, queryError] = useDataQuery('/');
   const user = useAuthState();
+  const [isAdmin, isAdminLoading] = useIsAdmin(user);
 
-  if (isLoading || user === undefined) return <PageMessage role="status">Loading courses...</PageMessage>;
+  if (isLoading || user === undefined || isAdminLoading) return <PageMessage role="status">Loading courses...</PageMessage>;
   if (queryError || !isSchedule(schedule)) {
     return <PageMessage role="alert">Could not load courses.</PageMessage>;
   }
 
-  return <TermPage schedule={schedule} user={user} />;
+  return <TermPage schedule={schedule} user={user} isAdmin={isAdmin} />;
 };
 
 export default App;

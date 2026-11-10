@@ -3,7 +3,7 @@
     ".read": true,
     "courses": {
       "$courseId": {
-        ".write": "auth != null && newData.exists()",
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists() && newData.exists()",
         ".validate": "newData.hasChildren(['term', 'number', 'meets', 'title'])",
         "term": { ".validate": "newData.isString()" },
         "number": { ".validate": "newData.isString()" },
