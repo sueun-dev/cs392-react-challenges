@@ -262,7 +262,7 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
   );
 };
 
-const AuthControls = ({ user }: { user: User | null }) => {
+const AuthControls = ({ user, isAdmin }: { user: User | null; isAdmin: boolean }) => {
   const [error, setError] = useState('');
 
   const run = (action: () => Promise<void>) => {
@@ -272,7 +272,14 @@ const AuthControls = ({ user }: { user: User | null }) => {
 
   return (
     <div className="auth-controls">
-      {user && <span className="auth-user">{user.displayName ?? user.email}</span>}
+      {user && (
+        <>
+          <span className="auth-user">{user.displayName ?? user.email}</span>
+          <span className="auth-role" data-role={isAdmin ? 'admin' : 'viewer'}>
+            {isAdmin ? 'Administrator' : 'View only'}
+          </span>
+        </>
+      )}
       <button type="button" className="action-button" data-variant="secondary"
         onClick={() => run(user ? signOutUser : signInWithGoogle)}>
         {user ? 'Sign out' : 'Sign in with Google'}
@@ -282,7 +289,18 @@ const AuthControls = ({ user }: { user: User | null }) => {
   );
 };
 
-const TermPage = ({ schedule, user, isAdmin }: { schedule: Schedule; user: User | null; isAdmin: boolean }) => {
+const accessHint = (user: User | null, isAdmin: boolean) => {
+  if (isAdmin) return '';
+  return user
+    ? 'You are signed in without edit access. Only administrators can edit courses.'
+    : 'Administrators can sign in to edit courses.';
+};
+
+const TermPage = ({ schedule, user, isAdmin }: {
+  schedule: Schedule;
+  user: User | null;
+  isAdmin: boolean;
+}) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
@@ -307,8 +325,13 @@ const TermPage = ({ schedule, user, isAdmin }: { schedule: Schedule; user: User 
     });
   };
 
-  if (isAdmin && editingCourseId !== null) {
-    return <CourseForm courseId={editingCourseId} course={schedule.courses[editingCourseId]}
+  if (!isAdmin && editingCourseId !== null) setEditingCourseId(null);
+
+  const editingCourse = isAdmin && editingCourseId !== null
+    ? schedule.courses[editingCourseId]
+    : undefined;
+  if (editingCourseId !== null && editingCourse) {
+    return <CourseForm courseId={editingCourseId} course={editingCourse}
       onCancel={() => setEditingCourseId(null)} />;
   }
 
@@ -320,12 +343,13 @@ const TermPage = ({ schedule, user, isAdmin }: { schedule: Schedule; user: User 
       <div className="course-toolbar flex flex-wrap items-center justify-between gap-3">
         <TermSelector selectedTerm={selectedTerm} onSelect={setSelectedTerm} />
         <div className="flex flex-wrap items-center gap-3">
-          <AuthControls user={user} />
+          <AuthControls user={user} isAdmin={isAdmin} />
           <CoursePlan courses={plannedCourses} />
         </div>
       </div>
       <p className="course-hint">
         Select a card to add it, or click it again to remove it. Conflicting courses are marked below.
+        {' '}{accessHint(user, isAdmin)}
       </p>
       <CourseList courses={visibleCourses} selectedCourses={selectedCourses}
         clashingCourseIds={clashingCourseIds} onSelect={toggleCourse}
@@ -348,7 +372,9 @@ const App = () => {
   const user = useAuthState();
   const [isAdmin, isAdminLoading] = useIsAdmin(user);
 
-  if (isLoading || user === undefined || isAdminLoading) return <PageMessage role="status">Loading courses...</PageMessage>;
+  if (isLoading || user === undefined || isAdminLoading) {
+    return <PageMessage role="status">Loading courses...</PageMessage>;
+  }
   if (queryError || !isSchedule(schedule)) {
     return <PageMessage role="alert">Could not load courses.</PageMessage>;
   }

@@ -120,6 +120,22 @@
   white-space: nowrap;
 }
 
+.auth-role {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auth-role[data-role="admin"] {
+  border-color: var(--accent);
+  background: #f0e8f8;
+  color: var(--accent);
+}
+
 .auth-error {
   flex-basis: 100%;
   text-align: right;

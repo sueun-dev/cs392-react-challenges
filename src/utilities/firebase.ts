@@ -40,28 +40,23 @@ export const useAuthState = () => {
 
 type DataQuery = [data: unknown, isLoading: boolean, error: Error | undefined];
 
+type QueryResult = { path: string; data?: unknown; error?: Error };
+
 export const useDataQuery = (path: string): DataQuery => {
-  const [data, setData] = useState<unknown>();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error>();
+  const [result, setResult] = useState<QueryResult>();
 
   useEffect(() => onValue(ref(database, path),
-    snapshot => {
-      setData(snapshot.val());
-      setIsLoading(false);
-    },
-    queryError => {
-      setError(queryError);
-      setIsLoading(false);
-    }
+    snapshot => setResult({ path, data: snapshot.val() }),
+    queryError => setResult({ path, error: queryError })
   ), [path]);
 
-  return [data, isLoading, error];
+  const isCurrent = result?.path === path;
+  return [isCurrent ? result.data : undefined, !isCurrent, isCurrent ? result.error : undefined];
 };
 
 export const useIsAdmin = (user: User | null | undefined): [isAdmin: boolean, isLoading: boolean] => {
   const [adminFlag, isLoading] = useDataQuery(`/admins/${user?.uid ?? 'guest'}`);
-  return [Boolean(user) && adminFlag === true, isLoading];
+  return [user != null && adminFlag === true, isLoading];
 };
 
 export const updateData = (path: string, value: object) => update(ref(database, path), value);

@@ -44,10 +44,11 @@ describe('authentication', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Loading courses...');
   });
 
-  it('offers sign in and hides Edit buttons when signed out', () => {
+  it('offers sign in, hides Edit buttons and tells signed-out visitors who can edit', () => {
     render(<App />);
     expect(screen.getByRole('button', { name: 'Sign in with Google' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/Administrators can sign in to edit courses/)).toBeInTheDocument();
   });
 
   it('starts Google sign in from the button', () => {
@@ -67,8 +68,10 @@ describe('authentication', () => {
     firebase.user = signedInUser;
     render(<App />);
     expect(screen.getByText('Sueun Cho')).toBeInTheDocument();
+    expect(screen.getByText('View only')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/Only administrators can edit courses/)).toBeInTheDocument();
   });
 
   it('shows the user name, Sign out, and Edit buttons to an admin', () => {
@@ -76,7 +79,26 @@ describe('authentication', () => {
     firebase.isAdmin = true;
     render(<App />);
     expect(screen.getByText('Sueun Cho')).toBeInTheDocument();
+    expect(screen.getByText('Administrator')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit Fall CS 101' })).toBeInTheDocument();
+    expect(screen.queryByText(/only administrators can edit/i)).not.toBeInTheDocument();
+  });
+
+  it('closes the editor when the user stops being an admin and does not reopen it later', () => {
+    firebase.user = signedInUser;
+    firebase.isAdmin = true;
+    const { rerender } = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Fall CS 101' }));
+    expect(screen.getByRole('heading', { name: 'Edit Fall CS 101' })).toBeInTheDocument();
+
+    firebase.isAdmin = false;
+    rerender(<App />);
+    expect(screen.queryByRole('heading', { name: 'Edit Fall CS 101' })).not.toBeInTheDocument();
+
+    firebase.isAdmin = true;
+    rerender(<App />);
+    expect(screen.queryByRole('heading', { name: 'Edit Fall CS 101' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit Fall CS 101' })).toBeInTheDocument();
   });
 
