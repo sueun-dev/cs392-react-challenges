@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import type { User } from 'firebase/auth';
 import { hasTimeClash } from './timeConflicts.js';
+import WeekCalendar from './WeekCalendar';
 import {
   signInWithGoogle, signOutUser, updateData, useAuthState, useDataQuery, useIsAdmin,
 } from './utilities/firebase';
@@ -222,8 +223,16 @@ const CourseForm = ({ courseId, course, onCancel }: {
   );
 };
 
+type PlanView = 'list' | 'calendar';
+
+const planViews: { view: PlanView; label: string }[] = [
+  { view: 'list', label: 'List' },
+  { view: 'calendar', label: 'Calendar' },
+];
+
 const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [view, setView] = useState<PlanView>('list');
 
   return (
     <>
@@ -232,6 +241,7 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
         Course plan ({courses.length})
       </button>
       <dialog ref={dialog} aria-labelledby="course-plan-title" className="course-plan"
+        data-view={view}
         onClick={event => {
           if (event.target === event.currentTarget) event.currentTarget.close();
         }}>
@@ -240,6 +250,17 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
           {courses.length === 0 ? (
             <p className="plan-empty">No courses selected. Click a course card to select it.</p>
           ) : (
+            <div className="term-selector plan-view-selector flex gap-1" role="group" aria-label="Plan view">
+              {planViews.map(({ view: option, label }) => (
+                <button key={option} type="button" className="term-button"
+                  aria-pressed={view === option} onClick={() => setView(option)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {courses.length > 0 && view === 'calendar' && <WeekCalendar courses={courses} />}
+          {courses.length > 0 && view === 'list' && (
             <ul className="plan-list">
               {courses.map(([courseId, course]) => (
                 <li key={courseId}>

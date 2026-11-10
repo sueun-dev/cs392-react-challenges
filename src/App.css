@@ -293,6 +293,92 @@
   font-size: 1.75rem;
 }
 
+.course-plan[data-view="calendar"] {
+  max-width: 52rem;
+}
+
+.plan-view-selector {
+  width: fit-content;
+  margin-bottom: 1rem;
+}
+
+.week-calendar + .week-calendar {
+  margin-top: 1.5rem;
+}
+
+.week-calendar h3 {
+  margin-bottom: 0.5rem;
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.week-grid {
+  --hour-height: 2.75rem;
+  display: grid;
+  grid-template-columns: 2.5rem repeat(5, minmax(0, 1fr));
+  grid-template-rows: auto calc(var(--hours) * var(--hour-height));
+  column-gap: 2px;
+}
+
+.week-day-name {
+  padding-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.week-hours {
+  position: relative;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-hours span {
+  position: absolute;
+  right: 0.25rem;
+  transform: translateY(-50%);
+}
+
+.week-day {
+  position: relative;
+  border-left: 1px solid var(--border);
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--hour-height) - 1px),
+    var(--border) calc(var(--hour-height) - 1px),
+    var(--border) var(--hour-height)
+  );
+}
+
+.week-block {
+  position: absolute;
+  right: 2px;
+  left: 2px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 3px solid var(--accent);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  background: #f0e8f8;
+  color: #351856;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.week-block span {
+  font-variant-numeric: tabular-nums;
+}
+
+.week-note {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
 .plan-list > li {
   padding: 1rem 0;
   border-top: 1px solid var(--border);
@@ -340,6 +426,29 @@
   .term-button,
   .action-button {
     padding-inline: 0.8rem;
+  }
+
+  .plan-content {
+    padding: 1rem;
+  }
+
+  .week-grid {
+    grid-template-columns: 2.25rem repeat(5, minmax(0, 1fr));
+  }
+
+  .week-block {
+    padding: 0.125rem 0.25rem;
+    border-left-width: 2px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .week-prefix {
+    display: none;
+  }
+
+  .week-block span {
+    display: none;
   }
 
   .course-toolbar > .action-button {

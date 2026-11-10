@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { User } from 'firebase/auth';
 import App from './App';
@@ -142,5 +142,16 @@ describe('authentication', () => {
     render(<App />);
     expect(screen.queryByRole('heading', { name: /^Edit Fall CS 101$/ })).not.toBeInTheDocument();
     expect(firebase.updateData).not.toHaveBeenCalled();
+  });
+
+  it('switches the course plan between a list and a weekly calendar', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    expect(screen.getByRole('button', { name: 'List', hidden: true, pressed: true })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Monday', hidden: true })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Calendar', hidden: true }));
+    expect(screen.getByRole('button', { name: 'Calendar', hidden: true, pressed: true })).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Monday', hidden: true })).getByText('101')).toBeInTheDocument();
   });
 });
