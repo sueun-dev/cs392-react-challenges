@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react';
-import { buildCalendars, formatTime, weekdays, type CalendarCourse } from './calendar';
+import { buildCalendars, formatTime, weekdays } from '../calendar';
+import type { Course } from '../schedule';
 
-const WeekCalendar = ({ courses }: { courses: [string, CalendarCourse][] }) => (
+const WeekCalendar = ({ courses }: { courses: [string, Course][] }) => (
   <>
     {buildCalendars(courses).map(({ term, blocks, unscheduled, startHour, endHour }) => {
       const hours = Array.from({ length: endHour - startHour }, (_, index) => startHour + index);
@@ -14,7 +15,7 @@ const WeekCalendar = ({ courses }: { courses: [string, CalendarCourse][] }) => (
           <div className="week-grid" style={{ '--hours': hours.length } as CSSProperties}>
             <div aria-hidden="true" />
             {weekdays.map(day => (
-              <div key={day.key} className="week-day-name" aria-hidden="true">{day.short}</div>
+              <div key={day.code} className="week-day-name" aria-hidden="true">{day.short}</div>
             ))}
             <div className="week-hours" aria-hidden="true">
               {hours.map(hour => (
@@ -22,12 +23,12 @@ const WeekCalendar = ({ courses }: { courses: [string, CalendarCourse][] }) => (
               ))}
             </div>
             {weekdays.map(day => (
-              <ol key={day.key} className="week-day" aria-label={day.name}>
-                {blocks.filter(block => block.day === day.key).map(block => (
+              <ol key={day.code} className="week-day" aria-label={day.name}>
+                {blocks.filter(block => block.day === day.code).map(block => (
                   <li key={block.courseId} className="week-block" title={block.title}
                     style={{ top: percent(block.start), height: `${((block.end - block.start) / span) * 100}%` }}>
                     <strong><span className="week-prefix">CS </span>{block.number}</strong>
-                    <span>{formatTime(block.start)}-{formatTime(block.end)}</span>
+                    <span className="week-time">{formatTime(block.start)}-{formatTime(block.end)}</span>
                   </li>
                 ))}
               </ol>

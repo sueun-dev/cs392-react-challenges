@@ -168,13 +168,13 @@
   font-size: 0.875rem;
 }
 
-.term-selector {
+.segmented {
   padding: 0.25rem;
   border-radius: 0.75rem;
   background: #ebe7f0;
 }
 
-.term-button,
+.segmented-button,
 .action-button {
   min-height: 2.75rem;
   border-radius: 0.5rem;
@@ -183,12 +183,12 @@
   font-weight: 600;
 }
 
-.term-button {
+.segmented-button {
   color: var(--muted);
 }
 
-.term-button:hover,
-.term-button[aria-pressed="true"] {
+.segmented-button:hover,
+.segmented-button[aria-pressed="true"] {
   background: var(--surface);
   color: var(--accent);
 }
@@ -302,6 +302,10 @@
   margin-bottom: 1rem;
 }
 
+.week-calendar {
+  container-type: inline-size;
+}
+
 .week-calendar + .week-calendar {
   margin-top: 1.5rem;
 }
@@ -367,9 +371,10 @@
   color: #351856;
   font-size: 0.75rem;
   line-height: 1.25;
+  white-space: nowrap;
 }
 
-.week-block span {
+.week-time {
   font-variant-numeric: tabular-nums;
 }
 
@@ -423,7 +428,7 @@
     padding: 0 1rem;
   }
 
-  .term-button,
+  .segmented-button,
   .action-button {
     padding-inline: 0.8rem;
   }
@@ -432,6 +437,12 @@
     padding: 1rem;
   }
 
+  .course-toolbar > .action-button {
+    margin-left: auto;
+  }
+}
+
+@container (max-width: 34rem) {
   .week-grid {
     grid-template-columns: 2.25rem repeat(5, minmax(0, 1fr));
   }
@@ -440,18 +451,10 @@
     padding: 0.125rem 0.25rem;
     border-left-width: 2px;
     font-size: 0.7rem;
-    white-space: nowrap;
   }
 
-  .week-prefix {
+  .week-prefix,
+  .week-time {
     display: none;
-  }
-
-  .week-block span {
-    display: none;
-  }
-
-  .course-toolbar > .action-button {
-    margin-left: auto;
   }
 }

@@ -22,13 +22,16 @@ vi.mock('./utilities/firebase', () => ({
     title: 'CS Courses',
     courses: {
       f101: { term: 'Fall', number: '101', meets: 'MWF 11:00-11:50', title: 'Intro to Computing' },
+      f102: { term: 'Fall', number: '102', meets: 'MW 11:30-12:20', title: 'Programming' },
+      f103: { term: 'Fall', number: '103', meets: 'TuTh 9:00-10:20', title: 'Data' },
+      w110: { term: 'Winter', number: '110', meets: 'MWF 11:00-11:50', title: 'Systems' },
     },
   }, false, undefined],
 }));
 
 const signedInUser = { displayName: 'Sueun Cho', email: 'sueun@example.com' } as User;
 
-describe('authentication', () => {
+describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     firebase.user = null;
@@ -153,5 +156,26 @@ describe('authentication', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Calendar', hidden: true }));
     expect(screen.getByRole('button', { name: 'Calendar', hidden: true, pressed: true })).toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Monday', hidden: true })).getByText('101')).toBeInTheDocument();
+  });
+
+  it('marks a course that overlaps a selected one and frees it again when the selection is removed', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    expect(screen.getByRole('button', { name: /Fall CS 102/ })).toBeDisabled();
+    expect(screen.getByText('Time conflict')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Fall CS 103/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    expect(screen.getByRole('button', { name: /Fall CS 102/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Course plan (0)' })).toBeInTheDocument();
+  });
+
+  it('keeps the selection when another term is shown and clashes stay within a term', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Winter' }));
+    expect(screen.getByRole('button', { name: /Winter CS 110/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
   });
 });

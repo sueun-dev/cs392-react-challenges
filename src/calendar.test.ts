@@ -1,33 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCalendars, formatTime, parseMeeting } from './calendar';
-
-describe('parseMeeting', () => {
-  it('reads days and 24-hour times', () => {
-    expect(parseMeeting('MWF 11:00-11:50')).toEqual({ days: ['M', 'W', 'F'], start: 660, end: 710 });
-    expect(parseMeeting('TuTh 14:00-15:20')).toEqual({ days: ['Tu', 'Th'], start: 840, end: 920 });
-  });
-
-  it('reads one-day meetings', () => {
-    expect(parseMeeting('Tu 14:00-17:10')?.days).toEqual(['Tu']);
-    expect(parseMeeting('Th 14:00-17:00')?.days).toEqual(['Th']);
-  });
-
-  it('treats early hours written on a 12-hour clock as the afternoon', () => {
-    expect(parseMeeting('TuTh 3:30-4:50')).toMatchObject({ start: 15 * 60 + 30, end: 16 * 60 + 50 });
-    expect(parseMeeting('M 6:00-9:00')).toMatchObject({ start: 18 * 60, end: 21 * 60 });
-  });
-
-  it('keeps morning times in the morning', () => {
-    expect(parseMeeting('TuTh 9:00-10:20')).toMatchObject({ start: 540, end: 620 });
-  });
-
-  it('returns null when the meeting cannot be read', () => {
-    expect(parseMeeting('')).toBeNull();
-    expect(parseMeeting('TBA')).toBeNull();
-    expect(parseMeeting('MWF 12:00-11:00')).toBeNull();
-    expect(parseMeeting('Sa 10:00-11:00')).toBeNull();
-  });
-});
+import { buildCalendars, formatTime } from './calendar';
 
 describe('formatTime', () => {
   it('writes minutes as hours and padded minutes', () => {
@@ -48,12 +20,19 @@ describe('buildCalendars', () => {
   it('adds one block per meeting day', () => {
     const [calendar] = buildCalendars([['f', fall]]);
     expect(calendar.blocks.map(({ day }) => day)).toEqual(['M', 'W', 'F']);
-    expect(calendar.blocks[0]).toMatchObject({ courseId: 'f', label: 'CS 101', start: 660, end: 710 });
+    expect(calendar.blocks[0]).toMatchObject({ courseId: 'f', number: '101', start: 660, end: 710 });
   });
 
-  it('lists courses without a readable meeting instead of dropping them', () => {
-    const [calendar] = buildCalendars([['f', fall], ['x', { ...fall, number: '999', meets: 'TBA' }]]);
-    expect(calendar.unscheduled).toEqual([{ courseId: 'x', label: 'CS 999' }]);
+  it('lists courses without a readable or visible meeting instead of dropping them', () => {
+    const [calendar] = buildCalendars([
+      ['f', fall],
+      ['x', { ...fall, number: '999', meets: 'TBA' }],
+      ['s', { ...fall, number: '998', meets: 'Sa 10:00-11:00' }],
+    ]);
+    expect(calendar.unscheduled).toEqual([
+      { courseId: 'x', label: 'CS 999' },
+      { courseId: 's', label: 'CS 998' },
+    ]);
     expect(calendar.blocks).toHaveLength(3);
   });
 
@@ -65,7 +44,9 @@ describe('buildCalendars', () => {
     expect([evening.startHour, evening.endHour]).toEqual([8, 21]);
   });
 
-  it('returns nothing when no courses are selected', () => {
+  it('puts unknown terms after the known ones and returns nothing without courses', () => {
+    const calendars = buildCalendars([['x', { ...fall, term: 'Intersession' }], ['f', fall]]);
+    expect(calendars.map(({ term }) => term)).toEqual(['Fall', 'Intersession']);
     expect(buildCalendars([])).toEqual([]);
   });
 });
