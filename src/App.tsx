@@ -3,8 +3,10 @@ import type { User } from 'firebase/auth';
 import AuthControls from './components/AuthControls';
 import CourseForm from './components/CourseForm';
 import CourseList from './components/CourseList';
+import CourseSearch from './components/CourseSearch';
 import CoursePlan from './components/CoursePlan';
 import SegmentedControl from './components/SegmentedControl';
+import { filterCourses } from './courseSearch';
 import { isSchedule, selectableTerms, type Schedule, type Term } from './schedule';
 import { useCourseSelection } from './useCourseSelection';
 import { useAuthState, useDataQuery, useIsAdmin } from './utilities/firebase';
@@ -25,11 +27,13 @@ const TermPage = ({ schedule, user, isAdmin }: {
   isAdmin: boolean;
 }) => {
   const [selectedTerm, setSelectedTerm] = useState<Term>('Fall');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const { selectedIds, plannedCourses, isBlocked, toggleCourse } = useCourseSelection(schedule.courses);
 
   const visibleCourses = Object.entries(schedule.courses)
     .filter(([, course]) => course.term === selectedTerm);
+  const matchingCourses = filterCourses(visibleCourses, searchQuery);
   const clashingIds = visibleCourses
     .filter(([courseId, course]) => isBlocked(courseId, course))
     .map(([courseId]) => courseId);
@@ -61,9 +65,14 @@ const TermPage = ({ schedule, user, isAdmin }: {
         Select a card to add it, or click it again to remove it. Conflicting courses are marked below.
         {' '}{accessHint(user, isAdmin)}
       </p>
-      <CourseList courses={visibleCourses} selectedIds={selectedIds}
-        clashingIds={clashingIds} onSelect={toggleCourse}
-        onEdit={isAdmin ? setEditingCourseId : undefined} />
+      <CourseSearch value={searchQuery} onChange={setSearchQuery} />
+      {matchingCourses.length === 0 ? (
+        <p className="course-empty" role="status">No courses match your search.</p>
+      ) : (
+        <CourseList courses={matchingCourses} selectedIds={selectedIds}
+          clashingIds={clashingIds} onSelect={toggleCourse}
+          onEdit={isAdmin ? setEditingCourseId : undefined} />
+      )}
     </main>
   );
 };

@@ -178,4 +178,26 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Winter CS 110/ })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
   });
+
+  it('filters the visible courses by the search text and offers a way back', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'program' } });
+    expect(screen.getByRole('button', { name: /Fall CS 102/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Fall CS 101/ })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'zzz' } });
+    expect(screen.getByText('No courses match your search.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(screen.getByRole('button', { name: /Fall CS 101/ })).toBeInTheDocument();
+    expect(screen.queryByText('No courses match your search.')).not.toBeInTheDocument();
+  });
+
+  it('keeps a selected course and its clash marks while it is filtered out', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'program' } });
+    expect(screen.getByRole('button', { name: /Fall CS 102/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
+  });
 });
