@@ -65,7 +65,8 @@ const TermPage = ({ schedule, user, isAdmin }: {
         Select a card to add it, or click it again to remove it. Conflicting courses are marked below.
         {' '}{accessHint(user, isAdmin)}
       </p>
-      <CourseSearch value={searchQuery} onChange={setSearchQuery} />
+      <CourseSearch value={searchQuery} resultCount={matchingCourses.length}
+        totalCount={visibleCourses.length} onChange={setSearchQuery} />
       {matchingCourses.length === 0 ? (
         <p className="course-empty" role="status">No courses match your search.</p>
       ) : (

@@ -214,6 +214,12 @@
   transform: translateY(-50%);
 }
 
+.course-search-count {
+  min-height: 1.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .course-empty {
   color: var(--muted);
 }

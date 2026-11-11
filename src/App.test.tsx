@@ -200,4 +200,19 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Fall CS 102/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
   });
+
+  it('finds courses despite typing mistakes and lists the best match first', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'progrmaing' } });
+    expect(screen.getByRole('button', { name: /Fall CS 102/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Fall CS 101/ })).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 3 courses match')).toBeInTheDocument();
+  });
+
+  it('finds courses by the day they meet', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'tuesday' } });
+    expect(screen.getByRole('button', { name: /Fall CS 103/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Fall CS 101/ })).not.toBeInTheDocument();
+  });
 });
