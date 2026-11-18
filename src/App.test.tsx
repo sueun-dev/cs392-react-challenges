@@ -34,6 +34,7 @@ const signedInUser = { displayName: 'Sueun Cho', email: 'sueun@example.com' } as
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     firebase.user = null;
     firebase.isAdmin = false;
     firebase.signInWithGoogle.mockResolvedValue(undefined);
@@ -199,6 +200,16 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'program' } });
     expect(screen.getByRole('button', { name: /Fall CS 102/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
+  });
+
+  it('remembers the selected courses after a reload', () => {
+    const { unmount } = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    unmount();
+
+    render(<App />);
+    expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Fall CS 101/ })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('finds courses despite typing mistakes and lists the best match first', () => {

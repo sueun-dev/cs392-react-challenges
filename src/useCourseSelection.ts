@@ -1,9 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { hasTimeClash } from './meetings';
 import type { Course } from './schedule';
 
+const STORAGE_KEY = 'course-plan';
+
+const loadSavedIds = (): string[] => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    return Array.isArray(saved) ? saved.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+};
+
 export const useCourseSelection = (courses: Record<string, Course>) => {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>(loadSavedIds);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedIds));
+    } catch {
+      // Storage unavailable (private mode or quota): the plan just won't persist.
+    }
+  }, [selectedIds]);
 
   const plannedCourses = selectedIds.flatMap((courseId): [string, Course][] =>
     courses[courseId] ? [[courseId, courses[courseId]]] : []);
