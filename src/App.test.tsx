@@ -212,6 +212,13 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Fall CS 101/ })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('drops remembered courses that no longer exist', () => {
+    localStorage.setItem('course-plan', JSON.stringify(['f101', 'gone']));
+    render(<App />);
+    expect(screen.getByRole('button', { name: 'Course plan (1)' })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('course-plan') ?? '[]')).toEqual(['f101']);
+  });
+
   it('finds courses despite typing mistakes and lists the best match first', () => {
     render(<App />);
     fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'progrmaing' } });
