@@ -451,6 +451,27 @@
   font-weight: 650;
 }
 
+.plan-note {
+  display: block;
+  width: 100%;
+  min-height: 3.5rem;
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+  caret-color: var(--accent);
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.plan-note:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .plan-meeting,
 .plan-empty {
   color: var(--muted);

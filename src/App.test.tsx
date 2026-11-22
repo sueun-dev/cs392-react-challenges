@@ -219,6 +219,46 @@ describe('App', () => {
     expect(JSON.parse(localStorage.getItem('course-plan') ?? '[]')).toEqual(['f101']);
   });
 
+  it('lets the user write a note for a planned course and remembers it after a reload', () => {
+    const { unmount } = render(<App />);
+    expect(screen.queryByLabelText('Note for Fall CS 101')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    fireEvent.change(screen.getByLabelText('Note for Fall CS 101'), { target: { value: 'Ask about the project' } });
+    expect(screen.getByLabelText('Note for Fall CS 101')).toHaveValue('Ask about the project');
+    unmount();
+
+    render(<App />);
+    expect(screen.getByLabelText('Note for Fall CS 101')).toHaveValue('Ask about the project');
+  });
+
+  it('keeps a note when its course is removed from the plan and selected again', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    fireEvent.change(screen.getByLabelText('Note for Fall CS 101'), { target: { value: 'Great teacher' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    expect(screen.queryByLabelText('Note for Fall CS 101')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    expect(screen.getByLabelText('Note for Fall CS 101')).toHaveValue('Great teacher');
+  });
+
+  it('forgets the saved note once the text is cleared', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Fall CS 101/ }));
+    fireEvent.change(screen.getByLabelText('Note for Fall CS 101'), { target: { value: 'Temporary' } });
+    expect(JSON.parse(localStorage.getItem('course-notes') ?? '{}')).toEqual({ f101: 'Temporary' });
+
+    fireEvent.change(screen.getByLabelText('Note for Fall CS 101'), { target: { value: '' } });
+    expect(JSON.parse(localStorage.getItem('course-notes') ?? '{}')).toEqual({});
+  });
+
+  it('drops remembered notes for courses that no longer exist', () => {
+    localStorage.setItem('course-notes', JSON.stringify({ f101: 'keep', gone: 'drop' }));
+    render(<App />);
+    expect(JSON.parse(localStorage.getItem('course-notes') ?? '{}')).toEqual({ f101: 'keep' });
+  });
+
   it('finds courses despite typing mistakes and lists the best match first', () => {
     render(<App />);
     fireEvent.change(screen.getByLabelText('Search courses'), { target: { value: 'progrmaing' } });

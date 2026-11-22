@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { noteMaxLength, type CourseNotes } from '../courseNotes';
 import type { Course } from '../schedule';
 import SegmentedControl from './SegmentedControl';
 import WeekCalendar from './WeekCalendar';
@@ -10,19 +11,29 @@ const planViews = [
   { value: 'calendar', label: 'Calendar' },
 ] as const;
 
-const PlanList = ({ courses }: { courses: [string, Course][] }) => (
+type NoteProps = {
+  notes: CourseNotes;
+  onNoteChange: (courseId: string, text: string) => void;
+};
+
+const PlanList = ({ courses, notes, onNoteChange }: NoteProps & { courses: [string, Course][] }) => (
   <ul className="plan-list">
     {courses.map(([courseId, course]) => (
       <li key={courseId}>
         <h3>{course.term} CS {course.number}</h3>
         <p>{course.title}</p>
         <p className="plan-meeting">{course.meets}</p>
+        <textarea className="plan-note" rows={2} maxLength={noteMaxLength}
+          aria-label={`Note for ${course.term} CS ${course.number}`}
+          placeholder="Add a note, e.g. professor, room, why you picked it"
+          value={notes[courseId] ?? ''}
+          onChange={event => onNoteChange(courseId, event.target.value)} />
       </li>
     ))}
   </ul>
 );
 
-const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
+const CoursePlan = ({ courses, notes, onNoteChange }: NoteProps & { courses: [string, Course][] }) => {
   const dialog = useRef<HTMLDialogElement>(null);
   const [view, setView] = useState<PlanView>('list');
 
@@ -45,7 +56,9 @@ const CoursePlan = ({ courses }: { courses: [string, Course][] }) => {
             <>
               <SegmentedControl label="Plan view" className="plan-view-selector"
                 options={planViews} value={view} onChange={setView} />
-              {view === 'calendar' ? <WeekCalendar courses={courses} /> : <PlanList courses={courses} />}
+              {view === 'calendar'
+                ? <WeekCalendar courses={courses} />
+                : <PlanList courses={courses} notes={notes} onNoteChange={onNoteChange} />}
             </>
           )}
           <div className="plan-footer flex justify-end">

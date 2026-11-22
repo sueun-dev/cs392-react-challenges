@@ -8,6 +8,7 @@ import CoursePlan from './components/CoursePlan';
 import SegmentedControl from './components/SegmentedControl';
 import { filterCourses } from './courseSearch';
 import { isSchedule, selectableTerms, type Schedule, type Term } from './schedule';
+import { useCourseNotes } from './useCourseNotes';
 import { useCourseSelection } from './useCourseSelection';
 import { useAuthState, useDataQuery, useIsAdmin } from './utilities/firebase';
 import './App.css';
@@ -30,6 +31,7 @@ const TermPage = ({ schedule, user, isAdmin }: {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const { selectedIds, plannedCourses, isBlocked, toggleCourse } = useCourseSelection(schedule.courses);
+  const { notes, changeNote } = useCourseNotes(schedule.courses);
 
   const visibleCourses = Object.entries(schedule.courses)
     .filter(([, course]) => course.term === selectedTerm);
@@ -58,7 +60,7 @@ const TermPage = ({ schedule, user, isAdmin }: {
           value={selectedTerm} onChange={setSelectedTerm} />
         <div className="flex flex-wrap items-center gap-3">
           <AuthControls user={user} isAdmin={isAdmin} />
-          <CoursePlan courses={plannedCourses} />
+          <CoursePlan courses={plannedCourses} notes={notes} onNoteChange={changeNote} />
         </div>
       </div>
       <p className="course-hint">
