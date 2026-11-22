@@ -26,6 +26,13 @@ describe('planStorage', () => {
     expect(loadPlan()).toEqual(['F101', 'W202']);
   });
 
+  it('treats a saved string, number or null as an empty plan', () => {
+    for (const text of ['"F101"', '7', 'null']) {
+      localStorage.setItem('course-plan', text);
+      expect(loadPlan()).toEqual([]);
+    }
+  });
+
   it('does not throw when the storage refuses to save or to load', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('storage is full');

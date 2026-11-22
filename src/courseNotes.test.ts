@@ -28,6 +28,18 @@ describe('courseNotes storage', () => {
     expect(loadNotes()).toEqual({ f101: 'keep' });
   });
 
+  it('cuts a saved note that is longer than the limit', () => {
+    saveNotes({ f101: 'x'.repeat(noteMaxLength + 50) });
+    expect(loadNotes().f101).toHaveLength(noteMaxLength);
+  });
+
+  it('treats a saved string or number as no notes', () => {
+    localStorage.setItem('course-notes', '"f101"');
+    expect(loadNotes()).toEqual({});
+    localStorage.setItem('course-notes', '7');
+    expect(loadNotes()).toEqual({});
+  });
+
   it('does not throw when the storage refuses to save or to load', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('storage is full');
@@ -53,6 +65,22 @@ describe('withNote', () => {
     expect(withNote({ f101: 'first', f102: 'second' }, 'f101', '')).toEqual({ f102: 'second' });
   });
 
+  it('leaves the notes alone when an empty text clears a course that has no note', () => {
+    const notes = { f101: 'first' };
+    expect(withNote(notes, 'f102', '')).toEqual({ f101: 'first' });
+  });
+
+  it('does not change the notes it was given when it removes one', () => {
+    const notes = { f101: 'first', f102: 'second' };
+    withNote(notes, 'f101', '');
+    expect(notes).toEqual({ f101: 'first', f102: 'second' });
+  });
+
+  it('keeps a note that is exactly at the limit', () => {
+    const exact = 'x'.repeat(noteMaxLength);
+    expect(withNote({}, 'f101', exact).f101).toBe(exact);
+  });
+
   it('cuts a note that is longer than the limit', () => {
     const long = 'x'.repeat(noteMaxLength + 20);
     expect(withNote({}, 'f101', long).f101).toHaveLength(noteMaxLength);
@@ -64,5 +92,13 @@ describe('keepExistingNotes', () => {
     const course = { term: 'Fall', number: '101', meets: 'MWF 11:00-11:50', title: 'Intro' };
     expect(keepExistingNotes({ f101: 'keep', gone: 'drop' }, { f101: course }))
       .toEqual({ f101: 'keep' });
+  });
+
+  it('does not treat inherited object keys as existing courses', () => {
+    expect(keepExistingNotes({ toString: 'drop', constructor: 'drop' }, {})).toEqual({});
+  });
+
+  it('returns no notes when there are no courses', () => {
+    expect(keepExistingNotes({ f101: 'drop' }, {})).toEqual({});
   });
 });

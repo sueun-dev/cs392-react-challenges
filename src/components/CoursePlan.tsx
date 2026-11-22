@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { noteMaxLength, type CourseNotes } from '../courseNotes';
+import type { CourseNotes } from '../courseNotes';
 import type { Course } from '../schedule';
+import PlanNote from './PlanNote';
 import SegmentedControl from './SegmentedControl';
 import WeekCalendar from './WeekCalendar';
 
@@ -11,29 +12,27 @@ const planViews = [
   { value: 'calendar', label: 'Calendar' },
 ] as const;
 
-type NoteProps = {
+type PlanProps = {
+  courses: [string, Course][];
   notes: CourseNotes;
   onNoteChange: (courseId: string, text: string) => void;
 };
 
-const PlanList = ({ courses, notes, onNoteChange }: NoteProps & { courses: [string, Course][] }) => (
+const PlanList = ({ courses, notes, onNoteChange }: PlanProps) => (
   <ul className="plan-list">
     {courses.map(([courseId, course]) => (
       <li key={courseId}>
         <h3>{course.term} CS {course.number}</h3>
         <p>{course.title}</p>
         <p className="plan-meeting">{course.meets}</p>
-        <textarea className="plan-note" rows={2} maxLength={noteMaxLength}
-          aria-label={`Note for ${course.term} CS ${course.number}`}
-          placeholder="Add a note, e.g. professor, room, why you picked it"
-          value={notes[courseId] ?? ''}
-          onChange={event => onNoteChange(courseId, event.target.value)} />
+        <PlanNote course={course} value={notes[courseId] ?? ''}
+          onChange={text => onNoteChange(courseId, text)} />
       </li>
     ))}
   </ul>
 );
 
-const CoursePlan = ({ courses, notes, onNoteChange }: NoteProps & { courses: [string, Course][] }) => {
+const CoursePlan = ({ courses, notes, onNoteChange }: PlanProps) => {
   const dialog = useRef<HTMLDialogElement>(null);
   const [view, setView] = useState<PlanView>('list');
 
